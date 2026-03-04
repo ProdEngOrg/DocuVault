@@ -1,11 +1,10 @@
-
 # DocuVault - SaaS Document Management System
 
 ## Team
-- **Team Name:** EchipaInCautareDeNume
+- **Team Name:** Cloud 9
 - **Members:**
-  - Enache-Preoteasa David - Identity & Workspace Manager (Implementare autentificare JWT, delegare spații virtuale și securizarea endpoint-urilor).
-  - Bunescu Robert - Document Operations Core & API Design (Dezvoltare operații CRUD pentru documente, sistem de export și structurarea răspunsurilor REST/HATEOAS).
+  - Enache-Preoteasa David - Identity & Workspace Manager (Implementare autentificare JWT, delegare spații virtuale, implementare sistem de distribuire a documentelor cu permisiuni de acces, securizarea endpoint-urilor).
+  - Bunescu Robert - Document Operations Core & API Design (Dezvoltare operații CRUD pentru documente și sistem de export).
   - MembruDeGasit - Version Control Engine (Implementarea logicii de business pentru versionarea automată a fișierelor, păstrarea istoricului și funcționalitatea de restore).
 
 ## Project Description
@@ -14,12 +13,10 @@ DocuVault este o aplicație de tip Software-as-a-Service (SaaS) care expune un A
 
 O componentă centrală a logicii de business o reprezintă sistemul automat de versionare. Spre deosebire de un sistem de stocare simplu, atunci când un utilizator actualizează conținutul sau metadatele unui document, DocuVault nu suprascrie informația veche, ci generează automat o nouă versiune a fișierului, păstrând istoricul complet al modificărilor pentru trasabilitate și recuperare.
 
-
-
 Arhitectura proiectului este modulară, separând responsabilitățile de securitate (JWT), operațiunile de bază pe fișiere (CRUD) și motorul de versionare. Acest grad de decuplare, susținut de o bază de date NoSQL persistentă (MongoDB), permite testarea riguroasă a regulilor de acces și a fluxurilor de date.
 
 ### Key Features
-- **Isolated Virtual Workspaces:** Autentificare securizată prin JWT și delegarea de spații virtuale unice pentru fiecare utilizator, garantând izolarea datelor.
+- **Isolated Virtual Workspaces:** Autentificare securizată prin JWT și delegarea de spații virtuale unice pentru fiecare utilizator, garantând izolarea datelor. Funcționalitatea de distribuire a documentelor cu permisiuni de acces.
 - **Document Management & Export:** Operațiuni complete de CRUD pe fișierele virtuale stocate în baza de date, inclusiv funcționalitatea de a exporta/descărca fișierul pe device-ul clientului. Răspunsuri API cu link-uri hypermedia pentru a facilita navigarea dinamică între resurse (ex: link-uri directe către versiunile anterioare ale unui document returnat).
 - **Automated Simple Versioning:** Urmărirea istorică a modificărilor prin crearea automată de noi versiuni (v1, v2, v3) la fiecare update al unui document.
 
