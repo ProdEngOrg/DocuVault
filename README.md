@@ -1,3 +1,45 @@
+
+# DocuVault - SaaS Document Management System
+
+## Team
+- **Team Name:** EchipaInCautareDeNume
+- **Members:**
+  - Enache-Preoteasa David - Identity & Workspace Manager (Implementare autentificare JWT, delegare spații virtuale și securizarea endpoint-urilor).
+  - Bunescu Robert - Document Operations Core & API Design (Dezvoltare operații CRUD pentru documente, sistem de export și structurarea răspunsurilor REST/HATEOAS).
+  - MembruDeGasit - Version Control Engine (Implementarea logicii de business pentru versionarea automată a fișierelor, păstrarea istoricului și funcționalitatea de restore).
+
+## Project Description
+
+DocuVault este o aplicație de tip Software-as-a-Service (SaaS) care expune un API RESTful pentru gestionarea sigură și eficientă a documentelor în cloud. Sistemul este gândit pentru a oferi utilizatorilor "spații de lucru virtuale" (Workspaces) complet izolate, unde își pot încărca, citi, actualiza și șterge fișierele, având control total asupra datelor proprii. 
+
+O componentă centrală a logicii de business o reprezintă sistemul automat de versionare. Spre deosebire de un sistem de stocare simplu, atunci când un utilizator actualizează conținutul sau metadatele unui document, DocuVault nu suprascrie informația veche, ci generează automat o nouă versiune a fișierului, păstrând istoricul complet al modificărilor pentru trasabilitate și recuperare.
+
+
+
+Arhitectura proiectului este modulară, separând responsabilitățile de securitate (JWT), operațiunile de bază pe fișiere (CRUD) și motorul de versionare. Acest grad de decuplare, susținut de o bază de date NoSQL persistentă (MongoDB), permite testarea riguroasă a regulilor de acces și a fluxurilor de date.
+
+### Key Features
+- **Isolated Virtual Workspaces:** Autentificare securizată prin JWT și delegarea de spații virtuale unice pentru fiecare utilizator, garantând izolarea datelor.
+- **Document Management & Export:** Operațiuni complete de CRUD pe fișierele virtuale stocate în baza de date, inclusiv funcționalitatea de a exporta/descărca fișierul pe device-ul clientului. Răspunsuri API cu link-uri hypermedia pentru a facilita navigarea dinamică între resurse (ex: link-uri directe către versiunile anterioare ale unui document returnat).
+- **Automated Simple Versioning:** Urmărirea istorică a modificărilor prin crearea automată de noi versiuni (v1, v2, v3) la fiecare update al unui document.
+
+### Technical Stack
+- **Backend:** Spring Boot (Java 21)
+- **Database:** MongoDB
+- **API:** RESTful/HATEOAS
+- **Testing:** JUnit, Mockito, Cucumber
+- **Monitoring:** Prometheus, Grafana
+- **Deployment:** Docker
+
+## Contributing
+
+All team members follow trunk-based development:
+1. Create feature branch from `main`
+2. Make changes and commit with clear messages
+3. Create PR and request review
+4. Address feedback
+5. Merge after approval
+
 # Prerequisites
 
 For using Github Codespaces, no prerequisites are mandatory.
