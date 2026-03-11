@@ -98,3 +98,25 @@ DELETE http://localhost:8080/api/todos/{{createTodo.response.body.id}}
 
 ### Delete user
 DELETE http://localhost:8080/api/users/{{createUser.response.body.id}}
+
+
+# ==========================================
+# Document Controller Endpoints
+# ==========================================
+
+### Create a new document (run first to populate variables for subsequent requests)
+# @name createDocument
+POST http://localhost:8080/api/documents
+Content-Type: application/json
+
+{
+    "title": "Project Charter",
+    "content": "This document defines the scope and goals of the project.",
+    "workspaceId": "ws-001",
+    "ownerId": "user-001",
+    "viewers": [],
+    "editors": []
+}
+
+### Get the latest version of the document by its documentGroupId
+GET http://localhost:8080/api/documents/{{createDocument.response.body.documentGroupId}}
