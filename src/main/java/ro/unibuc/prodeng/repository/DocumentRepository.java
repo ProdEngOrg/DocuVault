@@ -10,6 +10,14 @@ import java.util.Optional;
 @Repository
 public interface DocumentRepository extends MongoRepository<DocumentEntity, String> {
 
+    // ── Versioning ───────────────────────────────────────────────────────────
+
+    /** Returns all versions of a logical document, newest first. */
+    List<DocumentEntity> findByDocumentGroupIdOrderByVersionDesc(String documentGroupId);
+
+    /** Returns the single latest version of a logical document. */
+    Optional<DocumentEntity> findTopByDocumentGroupIdOrderByVersionDesc(String documentGroupId);
+
     // ── Ownership & workspace ────────────────────────────────────────────────
 
     /** All documents owned by a user (latest and historical versions). */
