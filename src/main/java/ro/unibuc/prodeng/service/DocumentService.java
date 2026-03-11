@@ -25,15 +25,18 @@ public class DocumentService {
      * A fresh documentGroupId is generated as the shared key for all future versions.
      */
     public DocumentResponse createDocument(DocumentCreateRequest request) {
-        DocumentEntity entity = new DocumentEntity();
-        entity.setDocumentGroupId(UUID.randomUUID().toString());
-        entity.setVersion(1);
-        entity.setOwnerId(request.ownerId());
-        entity.setTitle(request.title());
-        entity.setContent(request.content());
-        entity.setWorkspaceId(request.workspaceId());
-        entity.setViewers(request.viewers() != null ? request.viewers() : List.of());
-        entity.setEditors(request.editors() != null ? request.editors() : List.of());
+        DocumentEntity entity = new DocumentEntity(
+                null,
+                UUID.randomUUID().toString(),
+                1,
+                request.ownerId(),
+                request.title(),
+                request.content(),
+                request.workspaceId(),
+                request.viewers() != null ? request.viewers() : List.of(),
+                request.editors() != null ? request.editors() : List.of(),
+                null
+        );
 
         return toResponse(documentRepository.save(entity));
     }
@@ -88,17 +91,18 @@ public class DocumentService {
                 .findTopByDocumentGroupIdOrderByVersionDesc(documentGroupId)
                 .orElseThrow(() -> new EntityNotFoundException(documentGroupId));
 
-        DocumentEntity newVersion = new DocumentEntity();
-        newVersion.setDocumentGroupId(latest.getDocumentGroupId());
-        newVersion.setVersion(latest.getVersion() + 1);
-        newVersion.setOwnerId(latest.getOwnerId());
-        newVersion.setWorkspaceId(latest.getWorkspaceId());
-
-        // Apply patch: keep existing value when the request field is null
-        newVersion.setTitle(request.title() != null ? request.title() : latest.getTitle());
-        newVersion.setContent(request.content() != null ? request.content() : latest.getContent());
-        newVersion.setViewers(request.viewers() != null ? request.viewers() : latest.getViewers());
-        newVersion.setEditors(request.editors() != null ? request.editors() : latest.getEditors());
+        DocumentEntity newVersion = new DocumentEntity(
+                null,
+                latest.documentGroupId(),
+                latest.version() + 1,
+                latest.ownerId(),
+                request.title()   != null ? request.title()   : latest.title(),
+                request.content() != null ? request.content() : latest.content(),
+                latest.workspaceId(),
+                request.viewers() != null ? request.viewers() : latest.viewers(),
+                request.editors() != null ? request.editors() : latest.editors(),
+                null
+        );
 
         return toResponse(documentRepository.save(newVersion));
     }
@@ -145,16 +149,16 @@ public class DocumentService {
 
     private DocumentResponse toResponse(DocumentEntity entity) {
         return new DocumentResponse(
-                entity.getId(),
-                entity.getDocumentGroupId(),
-                entity.getVersion(),
-                entity.getOwnerId(),
-                entity.getTitle(),
-                entity.getContent(),
-                entity.getWorkspaceId(),
-                entity.getViewers(),
-                entity.getEditors(),
-                entity.getCreatedAt()
+                entity.id(),
+                entity.documentGroupId(),
+                entity.version(),
+                entity.ownerId(),
+                entity.title(),
+                entity.content(),
+                entity.workspaceId(),
+                entity.viewers(),
+                entity.editors(),
+                entity.createdAt()
         );
     }
 }
