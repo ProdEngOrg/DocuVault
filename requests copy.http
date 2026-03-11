@@ -1,0 +1,100 @@
+# You can use this file to easily send requests to your API.
+# Prerequisite: humao.rest-client Vscode plugin (already present on codespace)
+# High-level overview of REST API concepts used here: https://www.packtpub.com/en-us/learning/how-to-tutorials/what-are-rest-verbs-and-status-codes-tutorial
+
+# TIP: Run requests in order - later requests reference IDs from earlier responses
+
+
+# ==========================================
+# User Controller Endpoints
+# ==========================================
+
+### Get all users
+GET http://localhost:8080/api/users
+
+### Create a new user (run this to populate variables for other requests)
+# @name createUser
+POST http://localhost:8080/api/users
+Content-Type: application/json
+
+{
+    "name": "Jean Valjean",
+    "email": "prisoner24601@france.fr"
+}
+
+### Get user by ID (uses ID from createUser response)
+GET http://localhost:8080/api/users/{{createUser.response.body.id}}
+
+### Get user by email (uses email from createUser response)
+GET http://localhost:8080/api/users/by-email?email={{createUser.response.body.email}}
+
+### Update user name (PUT)
+PUT http://localhost:8080/api/users/{{createUser.response.body.id}}
+Content-Type: application/json
+
+{
+    "name": "Monsieur Madeleine"
+}
+
+### Change user name (PATCH)
+PATCH http://localhost:8080/api/users/{{createUser.response.body.id}}/name
+Content-Type: application/json
+
+{
+    "name": "Monsieur le Maire"
+}
+
+
+# ==========================================
+# Todo Controller Endpoints
+# ==========================================
+
+### Create a new todo (run this after createUser to populate variables)
+# @name createTodo
+POST http://localhost:8080/api/todos
+Content-Type: application/json
+
+{
+    "description": "Rescue Cosette from the Thénardiers",
+    "assigneeEmail": "{{createUser.response.body.email}}"
+}
+
+### Get todos by assignee email
+GET http://localhost:8080/api/todos?assigneeEmail={{createUser.response.body.email}}
+
+### Get todo by ID (uses ID from createTodo response)
+GET http://localhost:8080/api/todos/{{createTodo.response.body.id}}
+
+### Mark todo as done
+PATCH http://localhost:8080/api/todos/{{createTodo.response.body.id}}/done
+Content-Type: application/json
+
+true
+
+### Assign todo to another user
+# Note: You'll need another user to exist for this to work
+PATCH http://localhost:8080/api/todos/{{createTodo.response.body.id}}/assignee
+Content-Type: application/json
+
+{
+    "newAssigneeEmail": "frodo@theshire.me"
+}
+
+### Edit todo description
+PATCH http://localhost:8080/api/todos/{{createTodo.response.body.id}}/description
+Content-Type: application/json
+
+{
+    "description": "Escape from Inspector Javert"
+}
+
+
+# ==========================================
+# Cleanup (run these last)
+# ==========================================
+
+### Delete todo
+DELETE http://localhost:8080/api/todos/{{createTodo.response.body.id}}
+
+### Delete user
+DELETE http://localhost:8080/api/users/{{createUser.response.body.id}}
