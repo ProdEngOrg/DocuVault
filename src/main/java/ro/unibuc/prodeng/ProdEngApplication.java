@@ -1,5 +1,7 @@
 package ro.unibuc.prodeng;
 
+import java.util.ArrayList;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -33,7 +35,7 @@ public class ProdEngApplication {
 	@PostConstruct
 	public void runAfterObjectCreated() {
 		if (userRepository.findByEmail("frodo@theshire.me").isEmpty()) {
-			CreateUserRequest userRequest = new CreateUserRequest("Frodo Baggins", "frodo@theshire.me");
+			CreateUserRequest userRequest = new CreateUserRequest("Frodo Baggins", "frodo@theshire.me", new ArrayList<>());
 			userService.createUser(userRequest);
 			todoService.createTodo(new CreateTodoRequest("Take the ring to Mordor", "frodo@theshire.me"));
 		}

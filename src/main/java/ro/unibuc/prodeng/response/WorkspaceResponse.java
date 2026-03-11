@@ -2,9 +2,8 @@ package ro.unibuc.prodeng.response;
 
 import java.util.List;
 
-public record UserResponse(
+public record WorkspaceResponse(
     String id,
     String name,
-    String email,
-    List<String> workspaces
+    List<String> users
 ) {}
