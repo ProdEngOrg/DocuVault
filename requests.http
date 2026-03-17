@@ -130,6 +130,7 @@ X-User-Id: {{createUser.response.body.id}}
     "title": "Project Charter",
     "content": "This document defines the scope and goals of the project.",
     "workspaceId": "{{createWorkspace.response.body.id}}",
+    "ownerId": "{{createUser.response.body.id}}",
     "viewers": [],
     "editors": []
 }
