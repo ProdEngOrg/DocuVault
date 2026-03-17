@@ -1,20 +1,16 @@
 package ro.unibuc.prodeng.service;
 
 import java.util.List;
-import java.util.ArrayList;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import ro.unibuc.prodeng.model.UserEntity;
-import ro.unibuc.prodeng.model.WorkspaceEntity;
 import ro.unibuc.prodeng.repository.UserRepository;
 import ro.unibuc.prodeng.repository.WorkspaceRepository;
 import ro.unibuc.prodeng.request.CreateUserRequest;
 import ro.unibuc.prodeng.request.CreateWorkspaceRequest;
 import ro.unibuc.prodeng.response.UserResponse;
-import ro.unibuc.prodeng.response.WorkspaceResponse;
-import ro.unibuc.prodeng.service.WorkspaceService;
 import ro.unibuc.prodeng.exception.EntityNotFoundException;
 
 @Service
@@ -24,10 +20,10 @@ public class UserService {
     private UserRepository userRepository;
 
     @Autowired
-    private WorkspaceRepository workspaceRepository;
+    private WorkspaceService workspaceService;
 
     @Autowired
-    private WorkspaceService workspaceService;
+    private WorkspaceRepository workspaceRepository;
 
     public List<UserResponse> getAllUsers() {
         return userRepository.findAll().stream()
@@ -37,7 +33,7 @@ public class UserService {
 
     public UserResponse getUserById(String id) throws EntityNotFoundException {
         UserEntity user = userRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException(id));
+            .orElseThrow(() -> new EntityNotFoundException(id));
         return toResponse(user);
     }
 
@@ -59,9 +55,7 @@ public class UserService {
         );
         user = userRepository.save(user);
 
-        WorkspaceResponse workspace = workspaceService.createWorkspace(new CreateWorkspaceRequest("Default Workspace", user.id()));
-        user.workspaces().add(workspace.id());
-        user = userRepository.save(user);
+        workspaceService.createWorkspace(new CreateWorkspaceRequest("Default Workspace", user.id()));
         return toResponse(user);
     }
 
@@ -74,10 +68,11 @@ public class UserService {
     }
 
     public void deleteUser(String id) throws EntityNotFoundException {
-        if (!userRepository.existsById(id)) {
-            throw new EntityNotFoundException(id);
-        }
+        UserEntity user = userRepository.findById(id)
+            .orElseThrow(() -> new EntityNotFoundException(id));
+        workspaceRepository.deleteAllById(user.workspaces());
         userRepository.deleteById(id);
+
     }
 
     public UserResponse getUserByEmail(String email) throws EntityNotFoundException {

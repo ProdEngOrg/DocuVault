@@ -44,6 +44,22 @@ Content-Type: application/json
     "name": "Monsieur le Maire"
 }
 
+### Delete user
+DELETE http://localhost:8080/api/users/{{createUser.response.body.id}}
+
+# ==========================================
+# Workspace Controller Endpoints
+# ==========================================
+
+### Create workspace
+# @name createWorkspace
+POST http://localhost:8080/api/workspaces
+Content-Type: application/json
+
+{
+    "name": "University Projects",
+    "userId": "{{createUser.response.body.id}}"
+}
 
 # ==========================================
 # Todo Controller Endpoints
@@ -112,8 +128,8 @@ Content-Type: application/json
 {
     "title": "Project Charter",
     "content": "This document defines the scope and goals of the project.",
-    "workspaceId": "ws-001",
-    "ownerId": "user-001",
+    "workspaceId": "{{createWorkspace.response.body.id}}",
+    "ownerId": "{{createUser.response.body.id}}",
     "viewers": [],
     "editors": []
 }
