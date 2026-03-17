@@ -52,6 +52,7 @@ DELETE http://localhost:8080/api/users/{{createUser.response.body.id}}
 # ==========================================
 
 ### Create workspace
+# @name createWorkspace
 POST http://localhost:8080/api/workspaces
 Content-Type: application/json
 
@@ -127,8 +128,8 @@ Content-Type: application/json
 {
     "title": "Project Charter",
     "content": "This document defines the scope and goals of the project.",
-    "workspaceId": "ws-001",
-    "ownerId": "user-001",
+    "workspaceId": "{{createWorkspace.response.body.id}}",
+    "ownerId": "{{createUser.response.body.id}}",
     "viewers": [],
     "editors": []
 }

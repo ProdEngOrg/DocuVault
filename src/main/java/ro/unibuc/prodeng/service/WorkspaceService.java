@@ -19,7 +19,6 @@ public class WorkspaceService {
 
     @Autowired
     private WorkspaceRepository workspaceRepository;
-
     @Autowired
     private UserRepository userRepository;
 
@@ -41,6 +40,10 @@ public class WorkspaceService {
         userRepository.save(user);
         return toResponse(savedWorkspace);
     }
+
+    // public WorkspaceResponse getAllWorkspaces(String userId) {
+
+    // }
 
     private WorkspaceResponse toResponse(WorkspaceEntity workspace) {
         return new WorkspaceResponse(
