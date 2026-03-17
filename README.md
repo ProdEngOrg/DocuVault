@@ -3,13 +3,12 @@
 ## Team
 - **Team Name:** Cloud 9
 - **Members:**
-  - Enache-Preoteasa David - Identity & Workspace Manager (Implementare autentificare JWT, delegare spații virtuale, implementare sistem de distribuire a documentelor cu permisiuni de acces, securizarea endpoint-urilor).
-  - Bunescu Robert - Document Operations Core & API Design (Dezvoltare operații CRUD pentru documente și sistem de export).
-  - MembruDeGasit - Version Control Engine (Implementarea logicii de business pentru versionarea automată a fișierelor, păstrarea istoricului și funcționalitatea de restore).
+  - Enache-Preoteasa David - Identity & Workspace Manager (, delegare spații virtuale, implementare sistem de distribuire a documentelor cu permisiuni de acces, securizarea endpoint-urilor).
+  - Bunescu Robert - Document Operations Core & API Design & Versioning on those files(Dezvoltare operații CRUD pentru documente).
 
 ## Project Description
 
-DocuVault este o aplicație de tip Software-as-a-Service (SaaS) care expune un API RESTful pentru gestionarea sigură și eficientă a documentelor în cloud. Sistemul este gândit pentru a oferi utilizatorilor "spații de lucru virtuale" (Workspaces) complet izolate, unde își pot încărca, citi, actualiza și șterge fișierele, având control total asupra datelor proprii. 
+DocuVault este o aplicație de tip Software-as-a-Service (SaaS) care expune un API RESTful pentru gestionarea sigură și eficientă a documentelor în cloud. Sistemul oferă utilizatorilor spații de lucru virtuale izolate, unde aceștia pot crea, citi, actualiza și șterge documente, având control deplin asupra datelor proprii.
 
 O componentă centrală a logicii de business o reprezintă sistemul automat de versionare. Spre deosebire de un sistem de stocare simplu, atunci când un utilizator actualizează conținutul sau metadatele unui document, DocuVault nu suprascrie informația veche, ci generează automat o nouă versiune a fișierului, păstrând istoricul complet al modificărilor pentru trasabilitate și recuperare.
 
@@ -27,6 +26,30 @@ Arhitectura proiectului este modulară, separând responsabilitățile de securi
 - **Testing:** JUnit, Mockito, Cucumber
 - **Monitoring:** Prometheus, Grafana
 - **Deployment:** Docker
+
+---
+
+## API Documentation
+
+Base URL: `http://localhost:8080`
+
+### Documents (`/api/documents`)
+
+All mutating document endpoints require the `X-User-Id` header for ownership and permission checks.
+
+| Method | Endpoint | Headers | Description | Request Body |
+|--------|----------|---------|-------------|--------------|
+| `POST` | `/api/documents` | `X-User-Id` | Create a new document (v1) | `{ "title", "content", "workspaceId", "viewers", "editors" }` |
+| `GET` | `/api/documents/{groupId}` | — | Get latest version by group ID | — |
+| `PUT` | `/api/documents/{groupId}` | `X-User-Id` | Update document (creates new version) | `{ "title", "content", "viewers", "editors" }` |
+| `DELETE` | `/api/documents/{groupId}` | `X-User-Id` | Delete all versions (owner only) | — |
+| `GET` | `/api/documents/workspace/{workspaceId}` | — | Get all documents in a workspace | — |
+| `GET` | `/api/documents/owner/{ownerId}` | — | Get all documents by owner | — |
+
+**Document access control (OR logic):**
+- User is the document owner
+- User is listed as an editor
+- User belongs to the same workspace
 
 ## Contributing
 
