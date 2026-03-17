@@ -6,6 +6,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
+import ro.unibuc.prodeng.exception.EntityNotFoundException;
+import ro.unibuc.prodeng.request.AddUserToWorkspaceRequest;
 import ro.unibuc.prodeng.request.CreateWorkspaceRequest;
 import ro.unibuc.prodeng.response.WorkspaceResponse;
 import ro.unibuc.prodeng.service.WorkspaceService;
@@ -17,8 +19,16 @@ public class WorkspaceController {
     private WorkspaceService workspaceService;
 
     @PostMapping
-    public ResponseEntity<WorkspaceResponse> createWorkspace(@Valid @RequestBody CreateWorkspaceRequest request) {
+    public ResponseEntity<WorkspaceResponse> createWorkspace(
+        @Valid @RequestBody CreateWorkspaceRequest request) {
         WorkspaceResponse workspace = workspaceService.createWorkspace(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(workspace);
+    }
+
+    @PostMapping("/add-user")
+    public ResponseEntity<WorkspaceResponse> addUserToWorkspace(
+        @Valid @RequestBody AddUserToWorkspaceRequest request) throws EntityNotFoundException {
+        WorkspaceResponse workspace = workspaceService.addUserToWorkspace(request);
+        return ResponseEntity.ok(workspace);
     }
 }

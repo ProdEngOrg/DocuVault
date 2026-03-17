@@ -11,6 +11,7 @@ import ro.unibuc.prodeng.model.UserEntity;
 import ro.unibuc.prodeng.model.WorkspaceEntity;
 import ro.unibuc.prodeng.repository.UserRepository;
 import ro.unibuc.prodeng.repository.WorkspaceRepository;
+import ro.unibuc.prodeng.request.AddUserToWorkspaceRequest;
 import ro.unibuc.prodeng.request.CreateWorkspaceRequest;
 import ro.unibuc.prodeng.response.WorkspaceResponse;
 
@@ -39,6 +40,23 @@ public class WorkspaceService {
         user.workspaces().add(savedWorkspace.id());
         userRepository.save(user);
         return toResponse(savedWorkspace);
+    }
+
+    public WorkspaceResponse addUserToWorkspace(AddUserToWorkspaceRequest request)
+        throws EntityNotFoundException {
+        UserEntity user = userRepository.findById(request.userId())
+            .orElseThrow(() -> new EntityNotFoundException(request.userId()));
+        WorkspaceEntity workspace = getWorkspaceEntityById(request.workspaceId());
+        user.workspaces().add(request.userId());
+        workspace.users().add(request.userId());
+        userRepository.save(user);
+        workspaceRepository.save(workspace);
+        return toResponse(workspace);
+    }
+
+    public WorkspaceEntity getWorkspaceEntityById(String id) throws EntityNotFoundException {
+        return workspaceRepository.findById(id)
+            .orElseThrow(() -> new EntityNotFoundException(id));
     }
 
     private WorkspaceResponse toResponse(WorkspaceEntity workspace) {

@@ -61,6 +61,28 @@ Content-Type: application/json
     "userId": "{{createUser.response.body.id}}"
 }
 
+### Create a second user (use this to populate id for the following request) 
+# @name createUser2
+POST http://localhost:8080/api/users
+Content-Type: application/json
+
+{
+    "name": "Philip J. Fry",
+    "email": "fry@futurama.com"
+}
+
+### Add user to workspace
+POST http://localhost:8080/api/workspaces/add-user
+Content-Type: application/json
+
+{
+    "userId": "{{createUser2.response.body.id}}",
+    "workspaceId": "{{createWorkspace.response.body.id}}"
+}
+
+### Delete second user
+DELETE http://localhost:8080/api/users/{{createUser2.response.body.id}}
+
 # ==========================================
 # Todo Controller Endpoints
 # ==========================================
