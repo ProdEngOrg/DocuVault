@@ -10,15 +10,10 @@ import java.util.Optional;
 @Repository
 public interface DocumentRepository extends MongoRepository<DocumentEntity, String> {
 
-    // ── Versioning ───────────────────────────────────────────────────────────
-
-    /** Returns all versions of a logical document, newest first. */
     List<DocumentEntity> findByDocumentGroupIdOrderByVersionDesc(String documentGroupId);
 
     /** Returns the single latest version of a logical document. */
     Optional<DocumentEntity> findTopByDocumentGroupIdOrderByVersionDesc(String documentGroupId);
-
-    // ── Ownership & workspace ────────────────────────────────────────────────
 
     /** All documents owned by a user (latest and historical versions). */
     List<DocumentEntity> findByOwnerId(String ownerId);
@@ -26,14 +21,4 @@ public interface DocumentRepository extends MongoRepository<DocumentEntity, Stri
     /** All documents in a workspace. */
     List<DocumentEntity> findByWorkspaceId(String workspaceId);
 
-    /** All documents in a workspace owned by a specific user. */
-    List<DocumentEntity> findByWorkspaceIdAndOwnerId(String workspaceId, String ownerId);
-
-    // ── Viewer / editor access ───────────────────────────────────────────────
-
-    /** Documents a given user has been granted viewer access to. */
-    List<DocumentEntity> findByViewersContaining(String userId);
-
-    /** Documents a given user has been granted editor access to. */
-    List<DocumentEntity> findByEditorsContaining(String userId);
 }
