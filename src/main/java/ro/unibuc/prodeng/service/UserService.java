@@ -68,10 +68,11 @@ public class UserService {
     }
 
     public void deleteUser(String id) throws EntityNotFoundException {
-        if (!userRepository.existsById(id)) {
-            throw new EntityNotFoundException(id);
-        }
+        UserEntity user = userRepository.findById(id)
+            .orElseThrow(() -> new EntityNotFoundException(id));
+        workspaceRepository.deleteAllById(user.workspaces());
         userRepository.deleteById(id);
+
     }
 
     public UserResponse getUserByEmail(String email) throws EntityNotFoundException {

@@ -44,6 +44,21 @@ Content-Type: application/json
     "name": "Monsieur le Maire"
 }
 
+### Delete user
+DELETE http://localhost:8080/api/users/{{createUser.response.body.id}}
+
+# ==========================================
+# Workspace Controller Endpoints
+# ==========================================
+
+### Create workspace
+POST http://localhost:8080/api/workspaces
+Content-Type: application/json
+
+{
+    "name": "University Projects",
+    "userId": "{{createUser.response.body.id}}"
+}
 
 # ==========================================
 # Todo Controller Endpoints
