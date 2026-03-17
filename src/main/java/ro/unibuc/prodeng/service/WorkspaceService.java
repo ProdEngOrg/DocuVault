@@ -41,10 +41,6 @@ public class WorkspaceService {
         return toResponse(savedWorkspace);
     }
 
-    // public WorkspaceResponse getAllWorkspaces(String userId) {
-
-    // }
-
     private WorkspaceResponse toResponse(WorkspaceEntity workspace) {
         return new WorkspaceResponse(
             workspace.id(),
