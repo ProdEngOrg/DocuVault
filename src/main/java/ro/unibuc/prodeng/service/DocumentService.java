@@ -8,6 +8,7 @@ import ro.unibuc.prodeng.model.DocumentEntity;
 import ro.unibuc.prodeng.model.UserEntity;
 import ro.unibuc.prodeng.repository.DocumentRepository;
 import ro.unibuc.prodeng.repository.UserRepository;
+import ro.unibuc.prodeng.request.DocumentAddViewerRequest;
 import ro.unibuc.prodeng.request.DocumentCreateRequest;
 import ro.unibuc.prodeng.request.DocumentUpdateRequest;
 import ro.unibuc.prodeng.response.DocumentResponse;
@@ -20,7 +21,6 @@ public class DocumentService {
 
     @Autowired
     private DocumentRepository documentRepository;
-
     @Autowired
     private UserRepository userRepository;
 
@@ -160,6 +160,43 @@ public class DocumentService {
 
         documentRepository.deleteAll(versions);
     }
+
+    // ── Access permissions ────────────────────────────────────────────────────
+
+    public DocumentResponse addViewer(String currentUserId, DocumentAddViewerRequest request) throws EntityNotFoundException {
+        if (!userRepository.existsById(request.userId())) {
+            throw new EntityNotFoundException(request.userId());
+        }
+        DocumentEntity document = getLatestDocumentEntityByGroupId(request.documentGroupId());
+        if (!currentUserId.equals(document.ownerId())) {
+            throw new AccessDeniedException(currentUserId, request.documentGroupId());
+        }
+        document.viewers().add(request.userId());
+        DocumentEntity saved = documentRepository.save(document);
+        return toResponse(saved);
+    }
+
+    // ── Version history ───────────────────────────────────────────────────────
+
+    /**
+     * Returns all versions of a logical document, newest first.
+     */
+    public List<DocumentResponse> getHistory(String documentGroupId) {
+        List<DocumentEntity> versions =
+                documentRepository.findByDocumentGroupIdOrderByVersionDesc(documentGroupId);
+        if (versions.isEmpty()) {
+            throw new EntityNotFoundException(documentGroupId);
+        }
+        return versions.stream().map(this::toResponse).toList();
+    }
+
+    // ── Utilities ────────────────────────────────────────────────────────────────
+
+    public DocumentEntity getLatestDocumentEntityByGroupId(String id) {
+        return documentRepository.findTopByDocumentGroupIdOrderByVersionDesc(id)
+            .orElseThrow(() -> new EntityNotFoundException(id));
+    }
+
     // ── Mapper ────────────────────────────────────────────────────────────────
 
     private DocumentResponse toResponse(DocumentEntity entity) {

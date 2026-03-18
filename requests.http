@@ -84,59 +84,14 @@ Content-Type: application/json
 DELETE http://localhost:8080/api/users/{{createUser2.response.body.id}}
 
 # ==========================================
-# Todo Controller Endpoints
-# ==========================================
-
-### Create a new todo (run this after createUser to populate variables)
-# @name createTodo
-POST http://localhost:8080/api/todos
-Content-Type: application/json
-
-{
-    "description": "Rescue Cosette from the Thénardiers",
-    "assigneeEmail": "{{createUser.response.body.email}}"
-}
-
-### Get todos by assignee email
-GET http://localhost:8080/api/todos?assigneeEmail={{createUser.response.body.email}}
-
-### Get todo by ID (uses ID from createTodo response)
-GET http://localhost:8080/api/todos/{{createTodo.response.body.id}}
-
-### Mark todo as done
-PATCH http://localhost:8080/api/todos/{{createTodo.response.body.id}}/done
-Content-Type: application/json
-
-true
-
-### Assign todo to another user
-# Note: You'll need another user to exist for this to work
-PATCH http://localhost:8080/api/todos/{{createTodo.response.body.id}}/assignee
-Content-Type: application/json
-
-{
-    "newAssigneeEmail": "frodo@theshire.me"
-}
-
-### Edit todo description
-PATCH http://localhost:8080/api/todos/{{createTodo.response.body.id}}/description
-Content-Type: application/json
-
-{
-    "description": "Escape from Inspector Javert"
-}
-
-
-# ==========================================
 # Cleanup (run these last)
 # ==========================================
-
-### Delete todo
-DELETE http://localhost:8080/api/todos/{{createTodo.response.body.id}}
 
 ### Delete user
 DELETE http://localhost:8080/api/users/{{createUser.response.body.id}}
 
+### Delete second user
+DELETE http://localhost:8080/api/users/{{createUser2.response.body.id}}
 
 # ==========================================
 # Document Controller Endpoints
@@ -168,6 +123,16 @@ X-User-Id: {{createUser.response.body.id}}
 {
     "title": "Project Charter v2",
     "content": "Updated scope and goals after review."
+}
+
+### Add viewer
+PUT http://localhost:8080/api/documents/add-viewer
+Content-Type: application/json
+X-User-Id: {{createUser.response.body.id}}
+
+{
+    "userId": "{{createUser2.response.body.id}}",
+    "documentGroupId": "{{createDocument.response.body.documentGroupId}}"
 }
 
 ### Get all documents by workspace

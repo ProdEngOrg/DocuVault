@@ -2,9 +2,9 @@ package ro.unibuc.prodeng.request;
 
 import jakarta.validation.constraints.NotBlank;
 
-public record AddUserToWorkspaceRequest(
+public record DocumentAddViewerRequest(
     @NotBlank
     String userId,
     @NotBlank
-    String workspaceId
+    String documentGroupId
 ) {}
