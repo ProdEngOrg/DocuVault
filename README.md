@@ -3,7 +3,7 @@
 ## Team
 - **Team Name:** Cloud 9
 - **Members:**
-  - Enache-Preoteasa David - Identity & Workspace Manager (, delegare spații virtuale, implementare sistem de distribuire a documentelor cu permisiuni de acces, securizarea endpoint-urilor).
+  - Enache-Preoteasa David - Identity & Workspace Manager (delegare spații virtuale, implementare sistem de distribuire a documentelor cu permisiuni de acces).
   - Bunescu Robert - Document Operations Core & API Design & Versioning on those files(Dezvoltare operații CRUD pentru documente).
 
 ## Project Description
@@ -12,10 +12,10 @@ DocuVault este o aplicație de tip Software-as-a-Service (SaaS) care expune un A
 
 O componentă centrală a logicii de business o reprezintă sistemul automat de versionare. Spre deosebire de un sistem de stocare simplu, atunci când un utilizator actualizează conținutul sau metadatele unui document, DocuVault nu suprascrie informația veche, ci generează automat o nouă versiune a fișierului, păstrând istoricul complet al modificărilor pentru trasabilitate și recuperare.
 
-Arhitectura proiectului este modulară, separând responsabilitățile de securitate (JWT), operațiunile de bază pe fișiere (CRUD) și motorul de versionare. Acest grad de decuplare, susținut de o bază de date NoSQL persistentă (MongoDB), permite testarea riguroasă a regulilor de acces și a fluxurilor de date.
+Arhitectura proiectului este modulară, separând responsabilitățile de izolare, operațiunile de bază pe fișiere (CRUD) și motorul de versionare. Acest grad de decuplare, susținut de o bază de date NoSQL persistentă (MongoDB), permite testarea riguroasă a regulilor de acces și a fluxurilor de date.
 
 ### Key Features
-- **Isolated Virtual Workspaces:** Autentificare securizată prin JWT și delegarea de spații virtuale unice pentru fiecare utilizator, garantând izolarea datelor. Funcționalitatea de distribuire a documentelor cu permisiuni de acces.
+- **Isolated Virtual Workspaces:** Delegarea de spații virtuale unice pentru fiecare utilizator, garantând izolarea datelor. Funcționalitatea de distribuire a documentelor cu permisiuni de acces.
 - **Document Management & Export:** Operațiuni complete de CRUD pe fișierele virtuale stocate în baza de date, inclusiv funcționalitatea de a exporta/descărca fișierul pe device-ul clientului. Răspunsuri API cu link-uri hypermedia pentru a facilita navigarea dinamică între resurse (ex: link-uri directe către versiunile anterioare ale unui document returnat).
 - **Automated Simple Versioning:** Urmărirea istorică a modificărilor prin crearea automată de noi versiuni (v1, v2, v3) la fiecare update al unui document.
 
@@ -42,14 +42,28 @@ All mutating document endpoints require the `X-User-Id` header for ownership and
 | `POST` | `/api/documents` | `X-User-Id` | Create a new document (v1) | `{ "title", "content", "workspaceId", "viewers", "editors" }` |
 | `GET` | `/api/documents/{groupId}` | — | Get latest version by group ID | — |
 | `PUT` | `/api/documents/{groupId}` | `X-User-Id` | Update document (creates new version) | `{ "title", "content", "viewers", "editors" }` |
+| `PUT` | `/api/documents/add-viewer` | `X-User-Id` | Add viewer to document | `{ "userId", "documentGroupId" }` |
 | `DELETE` | `/api/documents/{groupId}` | `X-User-Id` | Delete all versions (owner only) | — |
 | `GET` | `/api/documents/workspace/{workspaceId}` | — | Get all documents in a workspace | — |
 | `GET` | `/api/documents/owner/{ownerId}` | — | Get all documents by owner | — |
 
-**Document access control (OR logic):**
-- User is the document owner
-- User is listed as an editor
-- User belongs to the same workspace
+### Document access control
+
+**Owner:** Delete File, Add viewers & editors, Edit file, View file
+
+**Workspace Member:** Edit file, View file
+
+**Editor:** Edit file, View file
+
+**Viewer:** View file
+
+### Workspaces (`api/workspaces`)
+
+| Method | Path | Headers | Description | Request Body |
+|-|-|-|-|-|
+| GET | `/statistics/{id}` | — | Get workspace statistics | — |
+| POST | — | — | Create workspace | `{ "name", "userId" }` |
+| POST | `/add-user` | — | Add user to workspace | `{ "userId", "workspaceId" }` |
 
 ## Contributing
 

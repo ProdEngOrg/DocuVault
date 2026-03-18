@@ -11,8 +11,11 @@ import ro.unibuc.prodeng.model.UserEntity;
 import ro.unibuc.prodeng.model.WorkspaceEntity;
 import ro.unibuc.prodeng.repository.UserRepository;
 import ro.unibuc.prodeng.repository.WorkspaceRepository;
+import ro.unibuc.prodeng.request.AddUserToWorkspaceRequest;
 import ro.unibuc.prodeng.request.CreateWorkspaceRequest;
 import ro.unibuc.prodeng.response.WorkspaceResponse;
+import ro.unibuc.prodeng.response.WorkspaceStatisticsResponse;
+import ro.unibuc.prodeng.service.DocumentService;
 
 @Service
 public class WorkspaceService {
@@ -21,6 +24,8 @@ public class WorkspaceService {
     private WorkspaceRepository workspaceRepository;
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private DocumentService documentService;
 
     public WorkspaceResponse createWorkspace(CreateWorkspaceRequest request) {
         UserEntity user = userRepository.findById(request.userId())
@@ -39,6 +44,29 @@ public class WorkspaceService {
         user.workspaces().add(savedWorkspace.id());
         userRepository.save(user);
         return toResponse(savedWorkspace);
+    }
+
+    public WorkspaceResponse addUserToWorkspace(AddUserToWorkspaceRequest request)
+        throws EntityNotFoundException {
+        UserEntity user = userRepository.findById(request.userId())
+            .orElseThrow(() -> new EntityNotFoundException(request.userId()));
+        WorkspaceEntity workspace = getWorkspaceEntityById(request.workspaceId());
+        user.workspaces().add(request.userId());
+        workspace.users().add(request.userId());
+        userRepository.save(user);
+        workspaceRepository.save(workspace);
+        return toResponse(workspace);
+    }
+
+    public WorkspaceStatisticsResponse getWorkspaceStatistics(String id) throws EntityNotFoundException {
+        String users = Integer.toString(getWorkspaceEntityById(id).users().size());
+        String files = Integer.toString(documentService.getByWorkspaceId(id).size());
+        return new WorkspaceStatisticsResponse(users, files);
+    }
+
+    public WorkspaceEntity getWorkspaceEntityById(String id) throws EntityNotFoundException {
+        return workspaceRepository.findById(id)
+            .orElseThrow(() -> new EntityNotFoundException(id));
     }
 
     private WorkspaceResponse toResponse(WorkspaceEntity workspace) {

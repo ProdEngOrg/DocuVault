@@ -39,7 +39,7 @@ public class UserService {
 
     public UserEntity getUserEntityById(String id) throws EntityNotFoundException {
         return userRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException(id));
+            .orElseThrow(() -> new EntityNotFoundException(id));
     }
 
     public UserResponse createUser(CreateUserRequest request) {

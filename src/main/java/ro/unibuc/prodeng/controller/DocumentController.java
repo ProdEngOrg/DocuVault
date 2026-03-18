@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ro.unibuc.prodeng.exception.EntityNotFoundException;
+import ro.unibuc.prodeng.request.DocumentAddViewerRequest;
 import ro.unibuc.prodeng.request.DocumentCreateRequest;
 import ro.unibuc.prodeng.request.DocumentUpdateRequest;
 import ro.unibuc.prodeng.response.DocumentResponse;
@@ -53,6 +54,14 @@ public class DocumentController {
             @RequestHeader("X-User-Id") String currentUserId,
             @Valid @RequestBody DocumentUpdateRequest request) throws EntityNotFoundException {
         DocumentResponse response = documentService.updateDocument(groupId, request, currentUserId);
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/add-viewer")
+    public ResponseEntity<DocumentResponse> addViewer(
+            @RequestHeader("X-User-Id") String currentUserId,
+            @Valid @RequestBody DocumentAddViewerRequest request) throws EntityNotFoundException {
+        DocumentResponse response = documentService.addViewer(currentUserId, request);
         return ResponseEntity.ok(response);
     }
 
