@@ -18,7 +18,7 @@ POST http://localhost:8080/api/users
 Content-Type: application/json
 
 {
-    "name": "Jean Valjean1",
+    "name": "Jean Valjean",
     "email": "prisoner3324601@france.fr"
 }
 
@@ -80,15 +80,8 @@ Content-Type: application/json
     "workspaceId": "{{createWorkspace.response.body.id}}"
 }
 
-### Delete second user
-DELETE http://localhost:8080/api/users/{{createUser2.response.body.id}}
-
-# ==========================================
-# Cleanup (run these last)
-# ==========================================
-
-### Delete user
-DELETE http://localhost:8080/api/users/{{createUser.response.body.id}}
+### Get workspace statistics
+GET http://localhost:8080/api/workspaces/statistics/{{createWorkspace.response.body.id}}
 
 ### Delete second user
 DELETE http://localhost:8080/api/users/{{createUser2.response.body.id}}
@@ -112,6 +105,21 @@ X-User-Id: {{createUser.response.body.id}}
     "editors": []
 }
 
+### Create a second document
+# @name createDocument2
+POST http://localhost:8080/api/documents
+Content-Type: application/json
+X-User-Id: {{createUser.response.body.id}}
+
+{
+    "title": "Second Document",
+    "content": "This document defines the scope and goals of the project.",
+    "workspaceId": "{{createWorkspace.response.body.id}}",
+    "ownerId": "{{createUser.response.body.id}}",
+    "viewers": [],
+    "editors": []
+}
+
 ### Get the latest version of the document by its documentGroupId
 GET http://localhost:8080/api/documents/{{createDocument.response.body.documentGroupId}}
 
@@ -119,6 +127,16 @@ GET http://localhost:8080/api/documents/{{createDocument.response.body.documentG
 PUT http://localhost:8080/api/documents/{{createDocument.response.body.documentGroupId}}
 Content-Type: application/json
 X-User-Id: {{createUser.response.body.id}}
+
+{
+    "title": "Project Charter v2",
+    "content": "Updated scope and goals after review."
+}
+
+### Update document - Fail case
+PUT http://localhost:8080/api/documents/{{createDocument.response.body.documentGroupId}}
+Content-Type: application/json
+X-User-Id: {{createUser2.response.body.id}}
 
 {
     "title": "Project Charter v2",
@@ -135,6 +153,16 @@ X-User-Id: {{createUser.response.body.id}}
     "documentGroupId": "{{createDocument.response.body.documentGroupId}}"
 }
 
+### Add viewer - Fail case
+PUT http://localhost:8080/api/documents/add-viewer
+Content-Type: application/json
+X-User-Id: {{createUser2.response.body.id}}
+
+{
+    "userId": "{{createUser2.response.body.id}}",
+    "documentGroupId": "{{createDocument.response.body.documentGroupId}}"
+}
+
 ### Get all documents by workspace
 GET http://localhost:8080/api/documents/workspace/{{createWorkspace.response.body.id}}
 
@@ -143,4 +171,26 @@ GET http://localhost:8080/api/documents/owner/{{createUser.response.body.id}}
 
 ### Delete all versions of the document
 DELETE http://localhost:8080/api/documents/{{createDocument.response.body.documentGroupId}}
+X-User-Id: {{createUser.response.body.id}}
+
+### Delete all versions of the document - Fail casse
+DELETE http://localhost:8080/api/documents/{{createDocument.response.body.documentGroupId}}
+X-User-Id: {{createUser2.response.body.id}}
+
+# ==========================================
+# Cleanup (run these last)
+# ==========================================
+
+### Delete user
+DELETE http://localhost:8080/api/users/{{createUser.response.body.id}}
+
+### Delete second user
+DELETE http://localhost:8080/api/users/{{createUser2.response.body.id}}
+
+### Delete all versions of the document
+DELETE http://localhost:8080/api/documents/{{createDocument.response.body.documentGroupId}}
+X-User-Id: {{createUser.response.body.id}}
+
+### Delete all versions of the second document
+DELETE http://localhost:8080/api/documents/{{createDocument2.response.body.documentGroupId}}
 X-User-Id: {{createUser.response.body.id}}

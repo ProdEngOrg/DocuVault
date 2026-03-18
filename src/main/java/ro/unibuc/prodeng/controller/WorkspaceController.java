@@ -10,6 +10,7 @@ import ro.unibuc.prodeng.exception.EntityNotFoundException;
 import ro.unibuc.prodeng.request.AddUserToWorkspaceRequest;
 import ro.unibuc.prodeng.request.CreateWorkspaceRequest;
 import ro.unibuc.prodeng.response.WorkspaceResponse;
+import ro.unibuc.prodeng.response.WorkspaceStatisticsResponse;
 import ro.unibuc.prodeng.service.WorkspaceService;
 
 @RestController
@@ -17,6 +18,12 @@ import ro.unibuc.prodeng.service.WorkspaceService;
 public class WorkspaceController {
     @Autowired
     private WorkspaceService workspaceService;
+
+    @GetMapping("/statistics/{id}")
+    public ResponseEntity<WorkspaceStatisticsResponse> getWorkspaceStatistics(@PathVariable String id) {
+        WorkspaceStatisticsResponse statistics = workspaceService.getWorkspaceStatistics(id);
+        return ResponseEntity.ok(statistics);
+    }
 
     @PostMapping
     public ResponseEntity<WorkspaceResponse> createWorkspace(
