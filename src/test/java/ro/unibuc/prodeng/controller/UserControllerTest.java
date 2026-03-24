@@ -2,6 +2,7 @@ package ro.unibuc.prodeng.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import io.cucumber.java.BeforeAll;
 import ro.unibuc.prodeng.exception.EntityNotFoundException;
 import ro.unibuc.prodeng.request.ChangeNameRequest;
 import ro.unibuc.prodeng.request.CreateUserRequest;
@@ -18,6 +19,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -42,11 +44,11 @@ class UserControllerTest {
 
     private ObjectMapper objectMapper = new ObjectMapper();
     
-    private UserResponse testUser1 = new UserResponse("1", "John Doe", "john@example.com");
-    private UserResponse testUser2 = new UserResponse("2", "Jane Smith", "jane@example.com");
-    private CreateUserRequest createUserRequest = new CreateUserRequest("John Doe", "john@example.com");
+    private UserResponse testUser1 = new UserResponse("1", "John Doe", "john@example.com", new ArrayList<>(List.of("1")));
+    private UserResponse testUser2 = new UserResponse("2", "Jane Smith", "jane@example.com", new ArrayList<>(List.of("2")));
+    private CreateUserRequest createUserRequest = new CreateUserRequest("John Doe", "john@example.com", new ArrayList<>(List.of("1")));
     private ChangeNameRequest changeNameRequest = new ChangeNameRequest("John Updated");
-    
+
     @BeforeEach
     void setUp() {
         mockMvc = MockMvcBuilders.standaloneSetup(userController).build();
@@ -139,7 +141,8 @@ class UserControllerTest {
     void testUpdateUser_existingUserRequested_updatesAndReturnsUser() throws Exception {
         // Arrange
         String userId = "1";
-        UserResponse updatedUser = new UserResponse("1", "John Updated", "john@example.com");
+        UserResponse updatedUser = new UserResponse("1", "John Updated", "john@example.com", new ArrayList<>());
+        updatedUser.workspaces().add("1");
         when(userService.changeName(eq(userId), eq("John Updated"))).thenReturn(updatedUser);
         
         // Act & Assert
