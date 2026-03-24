@@ -6,11 +6,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import ro.unibuc.prodeng.model.UserEntity;
 import ro.unibuc.prodeng.repository.UserRepository;
+import ro.unibuc.prodeng.repository.WorkspaceRepository;
 import ro.unibuc.prodeng.request.CreateUserRequest;
+import ro.unibuc.prodeng.request.CreateWorkspaceRequest;
 import ro.unibuc.prodeng.response.UserResponse;
 import ro.unibuc.prodeng.exception.EntityNotFoundException;
 
@@ -29,6 +32,12 @@ class UserServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private WorkspaceRepository workspaceRepository;
+
+    @Mock
+    private WorkspaceService workspaceService;
 
     @InjectMocks
     private UserService userService;
@@ -132,7 +141,8 @@ class UserServiceTest {
     @Test
     void testDeleteUser_existingUserRequested_deletesSuccessfully() throws EntityNotFoundException {
         // Arrange
-        when(userRepository.existsById("1")).thenReturn(true);
+        UserEntity existing = new UserEntity("1", "Alice", "alice@example.com", new ArrayList<>(List.of("1")));
+        when(userRepository.findById("1")).thenReturn(Optional.of(existing));
 
         // Act
         userService.deleteUser("1");
