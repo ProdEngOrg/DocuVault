@@ -14,12 +14,14 @@ import ro.unibuc.prodeng.request.CreateUserRequest;
 import ro.unibuc.prodeng.response.UserResponse;
 import ro.unibuc.prodeng.exception.EntityNotFoundException;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(SpringExtension.class)
@@ -35,8 +37,8 @@ class UserServiceTest {
     void testGetAllUsers_withMultipleUsers_returnsAllUsers() {
         // Arrange
         List<UserEntity> users = Arrays.asList(
-                new UserEntity("1", "Alice", "alice@example.com"),
-                new UserEntity("2", "Bob", "bob@example.com")
+                new UserEntity("1", "Alice", "alice@example.com", new ArrayList<>(List.of("1"))),
+                new UserEntity("2", "Bob", "bob@example.com", new ArrayList<>(List.of("2")))
         );
         when(userRepository.findAll()).thenReturn(users);
 
@@ -52,7 +54,7 @@ class UserServiceTest {
     @Test
     void testGetUserById_existingUserRequested_returnsUser() throws EntityNotFoundException {
         // Arrange
-        UserEntity user = new UserEntity("1", "Alice", "alice@example.com");
+        UserEntity user = new UserEntity("1", "Alice", "alice@example.com", new ArrayList<>(List.of("1")));
         when(userRepository.findById("1")).thenReturn(Optional.of(user));
 
         // Act
@@ -76,13 +78,13 @@ class UserServiceTest {
     @Test
     void testCreateUser_newUserWithValidData_createsAndReturnsUser() {
         // Arrange
-        CreateUserRequest request = new CreateUserRequest("Alice", "alice@example.com");
+        CreateUserRequest request = new CreateUserRequest("Alice", "alice@example.com", new ArrayList<>(List.of("1")));
         when(userRepository.findByEmail(anyString())).thenReturn(Optional.empty());
         when(userRepository.save(any(UserEntity.class))).thenAnswer(invocation -> {
             UserEntity entity = invocation.getArgument(0);
             // Simulate MongoDB generating an ID for new entities
             String id = "generated-id-123";
-            return new UserEntity(id, entity.name(), entity.email());
+            return new UserEntity(id, entity.name(), entity.email(), entity.workspaces());
         });
 
         // Act
@@ -99,13 +101,13 @@ class UserServiceTest {
     @Test
     void testChangeName_existingUserRequested_changesNameSuccessfully() throws EntityNotFoundException {
         // Arrange
-        UserEntity existing = new UserEntity("1", "Alice", "alice@example.com");
+        UserEntity existing = new UserEntity("1", "Alice", "alice@example.com", new ArrayList<>(List.of("1")));
         when(userRepository.findById("1")).thenReturn(Optional.of(existing));
         when(userRepository.save(any(UserEntity.class))).thenAnswer(invocation -> {
             UserEntity entity = invocation.getArgument(0);
             // Simulate MongoDB generating an ID for new entities
             String id = entity.id() == null ? "generated-id-123" : entity.id();
-            return new UserEntity(id, entity.name(), entity.email());
+            return new UserEntity(id, entity.name(), entity.email(), entity.workspaces());
         });
 
         // Act
