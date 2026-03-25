@@ -13,7 +13,9 @@ import ro.unibuc.prodeng.request.DocumentCreateRequest;
 import ro.unibuc.prodeng.request.DocumentUpdateRequest;
 import ro.unibuc.prodeng.response.DocumentResponse;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
 import java.util.UUID;
 
 @Service
@@ -167,12 +169,14 @@ public class DocumentService {
         if (!userRepository.existsById(request.userId())) {
             throw new EntityNotFoundException(request.userId());
         }
-        DocumentEntity document = getLatestDocumentEntityByGroupId(request.documentGroupId());
-        if (!currentUserId.equals(document.ownerId())) {
+        DocumentEntity existing = getLatestDocumentEntityByGroupId(request.documentGroupId());
+        if (!currentUserId.equals(existing.ownerId())) {
             throw new AccessDeniedException(currentUserId, request.documentGroupId());
         }
-        document.viewers().add(request.userId());
-        DocumentEntity saved = documentRepository.save(document);
+        List<String> updatedViewers = new ArrayList<>(existing.viewers());
+        updatedViewers.add(request.userId());
+        DocumentEntity updated = new DocumentEntity(existing.id(), existing.documentGroupId(), existing.version(), existing.ownerId(), existing.title(), existing.content(), existing.workspaceId(), updatedViewers, existing.editors(), existing.createdAt());
+        DocumentEntity saved = documentRepository.save(updated);
         return toResponse(saved);
     }
 

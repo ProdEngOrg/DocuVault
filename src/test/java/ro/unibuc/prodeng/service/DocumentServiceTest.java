@@ -301,6 +301,56 @@ class DocumentServiceTest {
         }
 
         @Test
+        void testAddViewer_asOwnerWhenViewerExists_addsViewerSuccessfully() {
+                // Arrange
+                Instant instant = Instant.now();
+                DocumentEntity document = new DocumentEntity("doc-1", "group-1", 1, "owner", "Title", "Content", "workspace-1", List.of(), List.of(), instant);
+                DocumentAddViewerRequest request = new DocumentAddViewerRequest("viewer", "group-1");
+                when(userRepository.existsById("viewer")).thenReturn(true);
+                when(documentRepository.findTopByDocumentGroupIdOrderByVersionDesc("group-1")).thenReturn(Optional.of(document));
+                when(documentRepository.save(any(DocumentEntity.class))).thenReturn(new DocumentEntity("doc-1", "group-1", 1, "owner", "Title", "Content", "workspace-1", List.of("viewer"), List.of(), instant));
+
+                // Act
+                DocumentResponse result = documentService.addViewer("owner", request);
+
+                // Assert
+                assertNotNull(result);
+                assertEquals("doc-1", result.id());
+                assertEquals("group-1", result.documentGroupId());
+                assertEquals(1, result.version());
+                assertEquals("owner", result.ownerId());
+                assertEquals("Title", result.title());
+                assertEquals("Content", result.content());
+                assertEquals("workspace-1", result.workspaceId());
+                assertIterableEquals(List.of("viewer"), result.viewers());
+                assertIterableEquals(List.of(), result.editors());
+                assertEquals(instant, result.createdAt());
+        }
+
+        @Test
+        void testAddViewer_asNotOwnerWhenViewerExists_throwsAccessDeniedException() {
+                // Arrange
+                Instant instant = Instant.now();
+                DocumentEntity document = new DocumentEntity("doc-1", "group-1", 1, "owner", "Title", "Content", "workspace-1", List.of(), List.of(), instant);
+                DocumentAddViewerRequest request = new DocumentAddViewerRequest("viewer", "group-1");
+                when(userRepository.existsById("viewer")).thenReturn(true);
+                when(documentRepository.findTopByDocumentGroupIdOrderByVersionDesc("group-1")).thenReturn(Optional.of(document));
+
+                // Act & Assert
+                assertThrows(AccessDeniedException.class, () -> documentService.addViewer("not-owner", request));
+        }        
+
+        @Test
+        void testAddViewer_WhenViewerNotExists_throwsEntityNotFoundException() {
+                // Arrange
+                DocumentAddViewerRequest request = new DocumentAddViewerRequest("viewer", "group-1");
+                when(userRepository.existsById("viewer")).thenReturn(false);
+
+                // Act & Assert
+                assertThrows(EntityNotFoundException.class, () -> documentService.addViewer("owner", request));
+        }
+
+        @Test
         void testDeleteAllVersions_asOwner_deletesSuccessfully() {
                 // Arrange
                 List<DocumentEntity> versions = Arrays.asList(
