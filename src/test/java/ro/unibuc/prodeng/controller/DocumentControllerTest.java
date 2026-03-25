@@ -3,6 +3,7 @@ package ro.unibuc.prodeng.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import ro.unibuc.prodeng.exception.EntityNotFoundException;
+import ro.unibuc.prodeng.model.DocumentEntity;
 import ro.unibuc.prodeng.request.DocumentAddViewerRequest;
 import ro.unibuc.prodeng.request.DocumentCreateRequest;
 import ro.unibuc.prodeng.request.DocumentUpdateRequest;
@@ -19,6 +20,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import ro.unibuc.prodeng.exception.AccessDeniedException;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
@@ -178,6 +180,67 @@ class DocumentControllerTest {
 
                 verify(documentService, times(1)).updateDocument(eq(groupId), any(DocumentUpdateRequest.class),
                                 eq("owner-1"));
+        }
+
+        @Test
+        void testAddViewer_asOwnerWhenViewerExists_addsViewerAndReturnsDocument() throws Exception {
+            // Arrange
+            String ownerId = "owner";
+            Instant instant = Instant.now();
+            DocumentResponse updatedDocument = new DocumentResponse("doc-1", "group-1", 1, ownerId, "Title", "Content", "workspace-1", List.of("viewer-2"), List.of(), instant);
+            when(documentService.addViewer(ownerId, addViewerRequest)).thenReturn(updatedDocument);
+
+            // Act & Assert
+            mockMvc.perform(put("/api/documents/add-viewer")
+                .header("X-User-Id", ownerId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(addViewerRequest)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id", is("doc-1")))
+                .andExpect(jsonPath("$.documentGroupId", is("group-1")))
+                .andExpect(jsonPath("$.version", is(1)))
+                .andExpect(jsonPath("$.ownerId", is(ownerId)))
+                .andExpect(jsonPath("$.title", is("Title")))
+                .andExpect(jsonPath("$.content", is("Content")))
+                .andExpect(jsonPath("$.workspaceId", is("workspace-1")))
+                .andExpect(jsonPath("$.viewers", hasSize(1)))
+                .andExpect(jsonPath("$.viewers[0]", is("viewer-2")))
+                .andExpect(jsonPath("$.editors", hasSize(0)))
+                .andExpect(jsonPath("$.createdAt", notNullValue()));
+
+            verify(documentService, times(1)).addViewer(ownerId, addViewerRequest);
+        }
+
+        @Test
+        void testAddViewer_asNotOwnerWhenViewerExists_returnsAccessDenied() throws Exception {
+            // Arrange
+            String notOwnerId = "not-owner";
+            when(documentService.addViewer(notOwnerId, addViewerRequest)).thenThrow(new AccessDeniedException(notOwnerId, addViewerRequest.documentGroupId()));
+
+            // Act & Assert
+            mockMvc.perform(put("/api/documents/add-viewer")
+                .header("X-User-Id", notOwnerId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(addViewerRequest)))
+                .andExpect(status().isForbidden());
+
+            verify(documentService, times(1)).addViewer(notOwnerId, addViewerRequest);
+        }
+
+        @Test
+        void testAddViewer_WhenViewerNotExists_returnsNotFound() throws Exception {
+            // Arrange
+            String ownerId = "owner";
+            when(documentService.addViewer(ownerId, addViewerRequest)).thenThrow(new EntityNotFoundException("User"));
+
+            // Act & Assert
+            mockMvc.perform(put("/api/documents/add-viewer")
+                .header("X-User-Id", ownerId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(addViewerRequest)))
+                .andExpect(status().isNotFound());
+
+            verify(documentService, times(1)).addViewer(ownerId, addViewerRequest);
         }
 
         @Test

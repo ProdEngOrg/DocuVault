@@ -12,6 +12,7 @@ import ro.unibuc.prodeng.request.DocumentUpdateRequest;
 import ro.unibuc.prodeng.response.DocumentResponse;
 import ro.unibuc.prodeng.service.DocumentService;
 
+import java.nio.file.AccessDeniedException;
 import java.util.List;
 
 @RestController
@@ -60,7 +61,7 @@ public class DocumentController {
     @PutMapping("/add-viewer")
     public ResponseEntity<DocumentResponse> addViewer(
             @RequestHeader("X-User-Id") String currentUserId,
-            @Valid @RequestBody DocumentAddViewerRequest request) throws EntityNotFoundException {
+            @Valid @RequestBody DocumentAddViewerRequest request) throws EntityNotFoundException, AccessDeniedException {
         DocumentResponse response = documentService.addViewer(currentUserId, request);
         return ResponseEntity.ok(response);
     }
