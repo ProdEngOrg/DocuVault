@@ -19,6 +19,12 @@ public class WorkspaceController {
     @Autowired
     private WorkspaceService workspaceService;
 
+    @GetMapping("/{id}")
+    public ResponseEntity<WorkspaceResponse> getWorkspaceById (@PathVariable String id) {
+        WorkspaceResponse workspace = workspaceService.getWorkspaceById(id);
+        return ResponseEntity.ok(workspace);
+    }
+
     @GetMapping("/statistics/{id}")
     public ResponseEntity<WorkspaceStatisticsResponse> getWorkspaceStatistics(@PathVariable String id) {
         WorkspaceStatisticsResponse statistics = workspaceService.getWorkspaceStatistics(id);
