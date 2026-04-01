@@ -1,5 +1,7 @@
 package ro.unibuc.prodeng.controller;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -9,6 +11,7 @@ import jakarta.validation.Valid;
 import ro.unibuc.prodeng.exception.EntityNotFoundException;
 import ro.unibuc.prodeng.request.AddUserToWorkspaceRequest;
 import ro.unibuc.prodeng.request.CreateWorkspaceRequest;
+import ro.unibuc.prodeng.response.UserResponse;
 import ro.unibuc.prodeng.response.WorkspaceResponse;
 import ro.unibuc.prodeng.response.WorkspaceStatisticsResponse;
 import ro.unibuc.prodeng.service.WorkspaceService;
@@ -18,6 +21,12 @@ import ro.unibuc.prodeng.service.WorkspaceService;
 public class WorkspaceController {
     @Autowired
     private WorkspaceService workspaceService;
+
+    @GetMapping
+    public ResponseEntity<List<WorkspaceResponse>> getAllWorkspaces() {
+        List<WorkspaceResponse> workspaces = workspaceService.getAllWorkspaces();
+        return ResponseEntity.ok(workspaces);
+    }
 
     @GetMapping("/{id}")
     public ResponseEntity<WorkspaceResponse> getWorkspaceById (@PathVariable String id) {
