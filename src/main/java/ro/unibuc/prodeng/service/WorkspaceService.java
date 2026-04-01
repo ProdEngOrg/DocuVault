@@ -15,7 +15,6 @@ import ro.unibuc.prodeng.request.AddUserToWorkspaceRequest;
 import ro.unibuc.prodeng.request.CreateWorkspaceRequest;
 import ro.unibuc.prodeng.response.WorkspaceResponse;
 import ro.unibuc.prodeng.response.WorkspaceStatisticsResponse;
-import ro.unibuc.prodeng.service.DocumentService;
 
 @Service
 public class WorkspaceService {
@@ -60,13 +59,12 @@ public class WorkspaceService {
 
     public WorkspaceStatisticsResponse getWorkspaceStatistics(String id) throws EntityNotFoundException {
         String users = Integer.toString(getWorkspaceEntityById(id).users().size());
-        String files = Integer.toString(documentService.getByWorkspaceId(id).size());
-        return new WorkspaceStatisticsResponse(users, files);
+        String documents = Integer.toString(documentService.getByWorkspaceId(id).size());
+        return new WorkspaceStatisticsResponse(users, documents);
     }
 
     public WorkspaceEntity getWorkspaceEntityById(String id) throws EntityNotFoundException {
-        return workspaceRepository.findById(id)
-            .orElseThrow(() -> new EntityNotFoundException(id));
+        return workspaceRepository.findById(id).orElseThrow(() -> new EntityNotFoundException(id));
     }
 
     private WorkspaceResponse toResponse(WorkspaceEntity workspace) {
