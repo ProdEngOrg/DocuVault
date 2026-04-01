@@ -51,6 +51,12 @@ DELETE http://localhost:8080/api/users/{{createUser.response.body.id}}
 # Workspace Controller Endpoints
 # ==========================================
 
+### Get all workspaces
+GET http://localhost:8080/api/workspaces
+
+### Get workspace by id
+GET http://localhost:8080/api/workspaces/{{createWorkspace.response.body.id}}
+
 ### Create workspace
 # @name createWorkspace
 POST http://localhost:8080/api/workspaces
@@ -60,9 +66,6 @@ Content-Type: application/json
     "name": "University Projects",
     "userId": "{{createUser.response.body.id}}"
 }
-
-### Get workspace by id
-GET http://localhost:8080/api/workspaces/{{createWorkspace.response.body.id}}
 
 ### Create a second user (use this to populate id for the following request) 
 # @name createUser2

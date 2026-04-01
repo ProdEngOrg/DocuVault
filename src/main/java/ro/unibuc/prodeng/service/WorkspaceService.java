@@ -13,6 +13,7 @@ import ro.unibuc.prodeng.repository.UserRepository;
 import ro.unibuc.prodeng.repository.WorkspaceRepository;
 import ro.unibuc.prodeng.request.AddUserToWorkspaceRequest;
 import ro.unibuc.prodeng.request.CreateWorkspaceRequest;
+import ro.unibuc.prodeng.response.UserResponse;
 import ro.unibuc.prodeng.response.WorkspaceResponse;
 import ro.unibuc.prodeng.response.WorkspaceStatisticsResponse;
 
@@ -25,6 +26,12 @@ public class WorkspaceService {
     private UserRepository userRepository;
     @Autowired
     private DocumentService documentService;
+
+    public List<WorkspaceResponse> getAllWorkspaces() throws EntityNotFoundException {
+        return workspaceRepository.findAll().stream()
+                .map(this::toResponse)
+                .toList();
+    }
 
     public WorkspaceResponse getWorkspaceById(String id) throws EntityNotFoundException {
         WorkspaceEntity workspace = workspaceRepository.findById(id)
