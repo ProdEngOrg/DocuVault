@@ -26,6 +26,12 @@ public class WorkspaceService {
     @Autowired
     private DocumentService documentService;
 
+    public WorkspaceResponse getWorkspaceById(String id) throws EntityNotFoundException {
+        WorkspaceEntity workspace = workspaceRepository.findById(id)
+            .orElseThrow(() -> new EntityNotFoundException(id));
+        return toResponse(workspace);
+    }
+
     public WorkspaceResponse createWorkspace(CreateWorkspaceRequest request) {
         UserEntity user = userRepository.findById(request.userId())
             .orElseThrow(() -> new EntityNotFoundException(request.userId()));
