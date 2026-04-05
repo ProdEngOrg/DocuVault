@@ -1,5 +1,5 @@
 # Prereqs
-Install loki logging driver docker plugin
+Install loki logging driver docker plugin 
 ```
 docker plugin install grafana/loki-docker-driver:2.4.1 --alias loki --grant-all-permissions
 ```
