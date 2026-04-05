@@ -47,3 +47,15 @@ infrastructure/loki/durable/
 
 ### Claude Code ###
 .claude/
+
+### Jenkins ###
+.jenkins/
+.jenkins_home/
+jenkins_home/
+jenkins_config/
+jobs/
+plugins/
+workspace/
+workspace@script/
+workspace@tmp/
+*.log
