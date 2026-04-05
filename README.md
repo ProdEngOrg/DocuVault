@@ -1,7 +1,7 @@
 # DocuVault - SaaS Document Management System
 
 ## Team
-- **Team Name:** Cloud 9
+- **Team Name:** Cloud 9 / DocuVault
 - **Members:**
   - Enache-Preoteasa David - Identity & Workspace Manager (delegare spații virtuale, implementare sistem de distribuire a documentelor cu permisiuni de acces).
   - Bunescu Robert - Document Operations Core & API Design & Versioning on those files(Dezvoltare operații CRUD pentru documente).
