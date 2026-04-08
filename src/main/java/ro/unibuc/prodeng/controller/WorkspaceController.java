@@ -17,7 +17,6 @@ import ro.unibuc.prodeng.response.WorkspaceStatisticsResponse;
 import ro.unibuc.prodeng.service.WorkspaceService;
 
 // Cheking automatic pipeline trigger
-// Cheking automatic pipeline trigger again
 
 @RestController
 @RequestMapping("/api/workspaces")
