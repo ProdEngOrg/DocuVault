@@ -17,6 +17,8 @@ import ro.unibuc.prodeng.response.UserResponse;
 import ro.unibuc.prodeng.response.WorkspaceResponse;
 import ro.unibuc.prodeng.response.WorkspaceStatisticsResponse;
 
+// Cheking automatic pipeline trigger
+
 @Service
 public class WorkspaceService {
 
