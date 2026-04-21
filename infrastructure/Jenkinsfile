@@ -62,6 +62,26 @@ pipeline {
                 '''
             }
         }
+        stage('Deploy Application') {
+            steps {
+                script {
+                    sh '''
+                        docker ps -q --filter "name=prod-eng" | xargs -r docker stop
+                        docker ps -q --filter "name=mongo" | xargs -r docker stop
+                    '''
+                    sh """
+                        PROD_ENG_IMAGE=${DOCKER_HUB_USERNAME}/prod-eng-img:${env.IMAGE_TAG} docker compose up -d prod-eng mongo
+                    """
+                    sleep 30
+                }
+            }
+        }
+
+        stage('Integration Tests') {
+            steps {
+                sh 'MONGODB_CONECTION_URL=mongodb://root:example@host.docker.internal:27017 ./gradlew testIT'
+            }
+        }
 
         stage('Tag Release') {
             steps {
@@ -75,7 +95,16 @@ pipeline {
 
     post {
         always {
-            sh 'docker logout'
-        }
+            junit '**/build/test-results/**/*.xml'
+            publishHTML([
+                allowMissing: true,
+                alwaysLinkToLastBuild: false,
+            keepAll: true,
+            reportDir: 'build/reports/tests/test',
+            reportFiles: 'index.html',
+            reportName: 'Test Report'
+        ])
+        sh 'docker logout'
     }
+}
 }
