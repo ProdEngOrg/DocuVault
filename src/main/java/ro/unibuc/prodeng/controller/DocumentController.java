@@ -10,6 +10,7 @@ import ro.unibuc.prodeng.request.DocumentAddViewerRequest;
 import ro.unibuc.prodeng.request.DocumentCreateRequest;
 import ro.unibuc.prodeng.request.DocumentUpdateRequest;
 import ro.unibuc.prodeng.response.DocumentResponse;
+import ro.unibuc.prodeng.service.AppMetricsService;
 import ro.unibuc.prodeng.service.DocumentService;
 
 import java.nio.file.AccessDeniedException;
@@ -22,6 +23,9 @@ public class DocumentController {
     @Autowired
     private DocumentService documentService;
 
+    @Autowired
+    private AppMetricsService appMetricsService;
+
     /**
      * Creates the first version of a new logical document.
      * The requesting user (X-User-Id) is automatically assigned as the owner.
@@ -32,6 +36,7 @@ public class DocumentController {
             @RequestHeader("X-User-Id") String currentUserId,
             @Valid @RequestBody DocumentCreateRequest request) throws EntityNotFoundException {
         DocumentResponse response = documentService.createDocument(currentUserId, request);
+        appMetricsService.recordDocumentCreated();
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -41,7 +46,9 @@ public class DocumentController {
     @GetMapping("/{groupId}")
     public ResponseEntity<DocumentResponse> getLatestByGroupId(
             @PathVariable String groupId) throws EntityNotFoundException {
-        return ResponseEntity.ok(documentService.getLatestByGroupId(groupId));
+        DocumentResponse response = appMetricsService.getDocumentLookupTimer()
+                .record(() -> documentService.getLatestByGroupId(groupId));
+        return ResponseEntity.ok(response);
     }
 
     /**

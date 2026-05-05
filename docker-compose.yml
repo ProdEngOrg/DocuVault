@@ -68,8 +68,10 @@ services:
     profiles:
       - "monitoring"
   mongodb-exporter:
-    build: ./infrastructure/mongodb_exporter/
-    command: ./mongodb_exporter-linux-amd64 -logtostderr -mongodb.uri mongodb://root:example@mongo:27017 -groups.enabled 'asserts,durability,background_flusshing,connections,extra_info,global_lock,index_counters,network,op_counters,op_counters_repl,memory,locks,metrics'
+    image: percona/mongodb_exporter:0.40
+    container_name: mongodb-exporter
+    environment:
+      - MONGODB_URI=mongodb://root:example@mongo:27017
     restart: always
     ports:
       - 9001:9001

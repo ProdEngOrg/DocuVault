@@ -36,7 +36,7 @@ dependencies {
 	implementation 'jakarta.annotation:jakarta.annotation-api:3.0.0'
 
 	runtimeOnly 'com.h2database:h2'
-	runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
+	runtimeOnly 'io.micrometer:micrometer-registry-prometheus-simpleclient'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.restdocs:spring-restdocs-mockmvc'
 	testImplementation 'org.testcontainers:junit-jupiter'
@@ -97,6 +97,8 @@ task testIT(type: Test) {
 	useJUnitPlatform {
 		includeTags "IntegrationTest"
 	}
+
+	environment "TESTCONTAINERS_RYUK_DISABLED", "true"
 }
 
 configurations {
@@ -116,6 +118,7 @@ task testE2E() {
 					'--plugin', 'html:build/reports/cucumber/cucumber-report.html',
 					'--glue', 'ro.unibuc.prodeng.e2e',
 					'src/test/resources']
+			environment "TESTCONTAINERS_RYUK_DISABLED", "true"
 		}
 	}
 }

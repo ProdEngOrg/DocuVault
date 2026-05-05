@@ -7,6 +7,7 @@ import ro.unibuc.prodeng.exception.EntityNotFoundException;
 import ro.unibuc.prodeng.request.ChangeNameRequest;
 import ro.unibuc.prodeng.request.CreateUserRequest;
 import ro.unibuc.prodeng.response.UserResponse;
+import ro.unibuc.prodeng.service.AppMetricsService;
 import ro.unibuc.prodeng.service.UserService;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -34,6 +35,9 @@ import static org.hamcrest.Matchers.*;
 @ExtendWith(SpringExtension.class)
 class UserControllerTest {
     
+    @Mock
+    private AppMetricsService appMetricsService;
+
     @Mock
     private UserService userService;
     

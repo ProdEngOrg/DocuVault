@@ -8,7 +8,12 @@ import ro.unibuc.prodeng.request.DocumentAddViewerRequest;
 import ro.unibuc.prodeng.request.DocumentCreateRequest;
 import ro.unibuc.prodeng.request.DocumentUpdateRequest;
 import ro.unibuc.prodeng.response.DocumentResponse;
+import ro.unibuc.prodeng.service.AppMetricsService;
 import ro.unibuc.prodeng.service.DocumentService;
+
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -37,6 +42,9 @@ import static org.hamcrest.Matchers.*;
 class DocumentControllerTest {
 
         @Mock
+        private AppMetricsService appMetricsService;
+
+        @Mock
         private DocumentService documentService;
 
         @InjectMocks
@@ -60,6 +68,12 @@ class DocumentControllerTest {
 
         @BeforeEach
         void setUp() {
+                // Provide a real Timer backed by a simple in-memory registry so that
+                // Timer.record(Supplier) works without a full Spring context.
+                MeterRegistry registry = new SimpleMeterRegistry();
+                Timer realTimer = Timer.builder("test.document.lookup").register(registry);
+                when(appMetricsService.getDocumentLookupTimer()).thenReturn(realTimer);
+
                 mockMvc = MockMvcBuilders.standaloneSetup(documentController).build();
         }
 

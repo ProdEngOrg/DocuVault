@@ -12,6 +12,7 @@ import ro.unibuc.prodeng.request.ChangeNameRequest;
 import ro.unibuc.prodeng.request.CreateUserRequest;
 import ro.unibuc.prodeng.response.UserResponse;
 import ro.unibuc.prodeng.exception.EntityNotFoundException;
+import ro.unibuc.prodeng.service.AppMetricsService;
 import ro.unibuc.prodeng.service.UserService;
 
 @RestController
@@ -20,6 +21,9 @@ public class UserController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private AppMetricsService appMetricsService;
 
     @GetMapping
     public ResponseEntity<List<UserResponse>> getAllUsers() {
@@ -35,8 +39,14 @@ public class UserController {
 
     @PostMapping
     public ResponseEntity<UserResponse> createUser(@Valid @RequestBody CreateUserRequest request) {
-        UserResponse user = userService.createUser(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(user);
+        try {
+            UserResponse user = userService.createUser(request);
+            appMetricsService.recordUserCreated();
+            return ResponseEntity.status(HttpStatus.CREATED).body(user);
+        } catch (Exception e) {
+            appMetricsService.recordUserCreationFailed();
+            throw e;
+        }
     }
 
     @PutMapping("/{id}")
