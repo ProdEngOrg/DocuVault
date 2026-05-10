@@ -8,12 +8,12 @@
 
 1. [Team](#team)
 2. [Project Description](#project-description)
-3. [Architecture](#architecture)
-4. [Branching Strategy](#branching-strategy)
-5. [Testing Strategy](#testing-strategy)
-6. [CI/CD Pipeline](#cicd-pipeline)
-7. [Observability](#observability)
-8. [API Documentation](#api-documentation)
+3. [API Documentation](#api-documentation)
+4. [Architecture](#architecture)
+5. [Branching Strategy](#branching-strategy)
+6. [Testing Strategy](#testing-strategy)
+7. [CI/CD Pipeline](#cicd-pipeline)
+8. [Observability](#observability)
 9. [Contributing](#contributing)
 10. [Prerequisites & Running the Project](#prerequisites)
 
@@ -55,7 +55,6 @@ Arhitectura proiectului este modulară, separând responsabilitățile de izolar
 | **Database** | MongoDB 6.0 |
 | **API Style** | RESTful / HATEOAS (`spring-boot-starter-hateoas`) |
 | **Unit & Integration Testing** | JUnit 5, Mockito, Testcontainers |
-| **E2E Testing** | Cucumber 7 (BDD) |
 | **Coverage** | JaCoCo |
 | **Performance Testing** | Apache JMeter, wrk |
 | **Monitoring** | Prometheus, Grafana, Loki, AlertManager |
@@ -65,14 +64,181 @@ Arhitectura proiectului este modulară, separând responsabilitățile de izolar
 
 ---
 
+## API Documentation
+
+Base URL: `http://localhost:8080`
+
+### Documents (`/api/documents`)
+
+All mutating document endpoints require the `X-User-Id` header for ownership and permission checks.
+
+| Method | Endpoint | Headers | Description | Request Body |
+|--------|----------|---------|-------------|--------------|
+| `POST` | `/api/documents` | `X-User-Id` | Create a new document (v1) | `{ "title", "content", "workspaceId", "viewers", "editors" }` |
+| `GET` | `/api/documents/{groupId}` | — | Get latest version by group ID | — |
+| `PUT` | `/api/documents/{groupId}` | `X-User-Id` | Update document (creates new version) | `{ "title", "content", "viewers", "editors" }` |
+| `PUT` | `/api/documents/add-viewer` | `X-User-Id` | Add viewer to document | `{ "userId", "documentGroupId" }` |
+| `DELETE` | `/api/documents/{groupId}` | `X-User-Id` | Delete all versions (owner only) | — |
+| `GET` | `/api/documents/workspace/{workspaceId}` | — | Get all documents in a workspace | — |
+| `GET` | `/api/documents/owner/{ownerId}` | — | Get all documents by owner | — |
+
+### Document Access Control
+
+| Role | Delete | Add Viewers/Editors | Edit | View |
+|---|---|---|---|---|
+| **Owner** | ✅ | ✅ | ✅ | ✅ |
+| **Workspace Member** | ❌ | ❌ | ✅ | ✅ |
+| **Editor** | ❌ | ❌ | ✅ | ✅ |
+| **Viewer** | ❌ | ❌ | ❌ | ✅ |
+
+### Workspaces (`/api/workspaces`)
+
+| Method | Path | Headers | Description | Request Body |
+|-|-|-|-|-|
+| `GET` | `/statistics/{id}` | — | Get workspace statistics | — |
+| `POST` | `/` | — | Create workspace | `{ "name", "userId" }` |
+| `POST` | `/add-user` | — | Add user to workspace | `{ "userId", "workspaceId" }` |
+
+---
+
 ## Architecture
 
-### System Architecture Diagram
+### 1. Application Architecture — DocuVault Internals
+
+This diagram shows the internal structure of the Spring Boot application, mapping exactly to the source code packages under `ro.unibuc.prodeng`.
+
+```mermaid
+graph TD
+    subgraph HTTP["REST API — HTTP Layer"]
+        REQ_H["X-User-Id Header\n(ownership context)"]
+    end
+
+    subgraph Controllers["Controller Layer — @RestController"]
+        DC["DocumentController\n/api/documents"]
+        WC["WorkspaceController\n/api/workspaces"]
+        UC["UserController\n/api/users"]
+        TC["TodoController\n/api/todos"]
+    end
+
+    subgraph RequestDTOs["Request DTOs — validation layer"]
+        DCR["DocumentCreateRequest\n{title, content, workspaceId,\nviewers, editors}"]
+        DUR["DocumentUpdateRequest\n{title, content,\nviewers, editors}"]
+        DAVR["DocumentAddViewerRequest\n{userId, documentGroupId}"]
+        CWR["CreateWorkspaceRequest\n{name, userId}"]
+        AUWR["AddUserToWorkspaceRequest\n{userId, workspaceId}"]
+    end
+
+    subgraph Services["Service Layer — @Service (Business Logic)"]
+        DS["DocumentService\n• createDocument()\n• getLatestByGroupId()\n• updateDocument()  ← auto-versioning\n• deleteAllVersions() ← owner-only\n• addViewer() ← owner-only\n• getHistory()"]
+        WS["WorkspaceService\n• createWorkspace()\n• addUserToWorkspace()\n• getWorkspaceStatistics()"]
+        US["UserService"]
+        TS["TodoService"]
+    end
+
+    subgraph ACL["Access Control — Permission Engine"]
+        direction LR
+        CHK["checkEditPermission()\n1. Is Owner?\n2. Is Editor?\n3. Same Workspace?"]
+    end
+
+    subgraph Repos["Repository Layer — MongoRepository"]
+        DR["DocumentRepository\n• findTopBy...OrderByVersionDesc()\n• findByDocumentGroupId...()\n• findByOwnerId()\n• findByWorkspaceId()"]
+        WR["WorkspaceRepository"]
+        UR["UserRepository"]
+        TR["TodoRepository"]
+    end
+
+    subgraph Entities["MongoDB Document Entities — @Document"]
+        DE["DocumentEntity\ncollection: files\n{id, documentGroupId, version,\nownerId, title, content,\nworkspaceId, viewers[],\neditors[], createdAt}"]
+        WE["WorkspaceEntity\ncollection: workspaces\n{id, name, users[]}"]
+        UE["UserEntity\ncollection: users\n{id, name, email,\nworkspaces[]}"]
+    end
+
+    subgraph ResponseDTOs["Response DTOs — HATEOAS"]
+        DRR["DocumentResponse"]
+        WRR["WorkspaceResponse"]
+        WSR["WorkspaceStatisticsResponse"]
+    end
+
+    subgraph ErrHandler["Global Error Handling — @RestControllerAdvice"]
+        GEH["GlobalExceptionHandler\n• 400 → IllegalArgumentException\n• 403 → AccessDeniedException\n• 404 → EntityNotFoundException"]
+    end
+
+    HTTP --> Controllers
+    REQ_H -.->|"injected via @RequestHeader"| DC
+
+    DC --> DCR & DUR & DAVR
+    WC --> CWR & AUWR
+
+    DC --> DS
+    WC --> WS
+    UC --> US
+    TC --> TS
+
+    DS --> CHK
+    DS --> DR
+    DS --> UR
+    WS --> WR
+    WS --> UR
+    WS --> DS
+    US --> UR
+    TS --> TR
+
+    DR --> DE
+    WR --> WE
+    UR --> UE
+
+    DS --> DRR
+    WS --> WRR & WSR
+
+    Controllers -.->|"exceptions"| GEH
+```
+
+#### Auto-Versioning Flow
+
+The core business logic — automatic document versioning — works as follows:
+
+```mermaid
+sequenceDiagram
+    actor Client
+    participant DC as DocumentController
+    participant DS as DocumentService
+    participant ACL as checkEditPermission()
+    participant DR as DocumentRepository
+    participant MongoDB
+
+    Client->>DC: PUT /api/documents/{groupId}<br/>X-User-Id: user-42
+    DC->>DS: updateDocument(groupId, request, "user-42")
+    DS->>DR: findTopByDocumentGroupIdOrderByVersionDesc(groupId)
+    DR->>MongoDB: db.files.find({documentGroupId: groupId}).sort({version: -1}).limit(1)
+    MongoDB-->>DR: DocumentEntity (version: 3)
+    DR-->>DS: latest entity (v3)
+
+    DS->>ACL: checkEditPermission("user-42", entity)
+    Note over ACL: 1. Is owner? ❌<br/>2. Is editor? ✅
+    ACL-->>DS: access granted
+
+    DS->>DS: Clone entity → set version = 4,<br/>merge request fields (title, content, viewers, editors)
+    DS->>DR: save(newVersion)
+    DR->>MongoDB: db.files.insertOne({...version: 4...})
+    MongoDB-->>DR: saved entity (v4)
+    DR-->>DS: DocumentEntity (v4)
+    DS->>DS: toResponse(entity) → DocumentResponse
+    DS-->>DC: DocumentResponse (v4)
+    DC-->>Client: 200 OK + DocumentResponse (v4)
+
+    Note over MongoDB: v1, v2, v3 remain<br/>untouched in the<br/>files collection
+```
+
+---
+
+### 2. Infrastructure & DevOps Architecture
+
+This diagram shows the full deployment topology — application containers, database, monitoring stack, CI/CD pipeline, and orchestration.
 
 ```mermaid
 graph TB
     subgraph Client["Client Layer"]
-        HTTP["HTTP Client\n(requests.http / curl)"]
+        HTTP["HTTP Client\n(requests.http / curl / JMeter)"]
     end
 
     subgraph App["Application Layer — Spring Boot (port 8080)"]
@@ -81,16 +247,13 @@ graph TB
         DC["DocumentController\n/api/documents"]
         ACT["Actuator\n/actuator/prometheus"]
 
-        WS["WorkspaceService\n(Isolation & Access Control)"]
-        DS["DocumentService\n(CRUD Operations)"]
-        VS["VersioningEngine\n(Auto-versioning Logic)"]
-        MS["AppMetricsService\n(Micrometer / Prometheus)"]
+        WS["WorkspaceService"]
+        DS["DocumentService"]
+        MS["AppMetricsService\n(Micrometer)"]
 
         WC --> WS
         DC --> DS
         DC --> MS
-        DS --> VS
-        DS --> WS
     end
 
     subgraph DB["Persistence Layer"]
@@ -206,15 +369,14 @@ main
 
 ## Testing Strategy
 
-The project implements a **three-tier testing pyramid** enforced via Gradle tasks and tagged JUnit 5 test suites.
+The project implements a **two-tier testing strategy** enforced via Gradle tasks and tagged JUnit 5 test suites.
 
 ```mermaid
 graph TD
-    E2E["🔺 E2E / BDD Tests\nCucumber · Gherkin Scenarios\n./gradlew testE2E"]
     INT["🔶 Integration Tests\nTestcontainers + real MongoDB\n./gradlew testIT"]
     UNIT["🟩 Unit Tests  (largest)\nJUnit 5 + Mockito · JaCoCo coverage\n./gradlew test"]
 
-    E2E --> INT --> UNIT
+    INT --> UNIT
 ```
 
 ### Unit Testing
@@ -240,41 +402,88 @@ graph TD
   ```
 - **Gradle tag:** Tests annotated `@Tag("IntegrationTest")`.
 
-### E2E / BDD Testing (Cucumber)
+### Performance Testing (Apache JMeter)
 
-- **Tools:** Cucumber 7 (`cucumber-java`, `cucumber-spring`, `cucumber-junit:7.20.1`), Apache HttpClient5.
-- **Scope:** Black-box, scenario-driven tests written in **Gherkin** (`src/test/resources/*.feature`). Each scenario exercises a complete HTTP flow against the running application, validating user-visible behaviour (document creation → update → version history → deletion).
-- **Report:** HTML report generated at `build/reports/cucumber/cucumber-report.html`.
-- **Run command:**
-  ```bash
-  # Requires the application and MongoDB to be running first
-  ./start.sh
-  ./gradlew testE2E
-  ```
+All performance test plans are located in the `jmeter/` directory and were created with **Apache JMeter 5.6.3**. The plans are organized into two categories: **DocuVault-specific** (Documents endpoint) and **legacy reference** (Todos endpoint, from the original service template).
 
-### Performance Testing
+#### 1. Documents Endpoint Test Plan (`jmeter/Test plan for Documents endpoint.jmx`)
 
-- **Tools:** **Apache JMeter** (`.jmx` test plans checked into the repository) and **wrk** (Docker-based traffic injectors defined in `docker-compose.yml`).
-- **JMeter Test Plans:**
+This is the primary performance test plan — a full CRUD load test against the `/api/documents` API.
 
-  | Plan | Description |
-  |---|---|
-  | `Test plan for Documents endpoint.jmx` | Functional load test targeting `/api/documents` |
-  | `View Results Tree.jmx` | Response validation under load |
-  | `Graph Results.jmx` | Throughput & latency graphing |
+| Parameter | Value |
+|---|---|
+| **Threads (virtual users)** | 50 |
+| **Ramp-up period** | 60 seconds |
+| **Loop count** | 5 per thread |
+| **Total requests** | 50 × 5 × 4 samplers = **1,000 requests** |
+| **Think time** | 500ms constant timer between requests |
+| **On error** | Continue |
 
-- **wrk Injectors (Docker Compose `perf` profile):**
+**HTTP Samplers (executed in sequence per loop):**
 
-  | Service | Command | Purpose |
-  |---|---|---|
-  | `wrk-injector-prod-eng-functional` | `wrk -t4 -c10 -d300s /api/users` | Low-concurrency sustained load (10 connections, 5 min) |
-  | `wrk-injector-info-perf` | `wrk -t4 -c1000 -d5m --latency /info` | High-concurrency stress test (1000 connections, latency histogram) |
+| # | Sampler | Method | Endpoint | Description |
+|---|---|---|---|---|
+| 1 | `POST Document Create` | `POST` | `/api/documents` | Creates a document with randomised title (`${__Random(1,10000)}`), per-thread owner (`owner-${__threadNum}`), in workspace `ws-1` |
+| 2 | `GET Document` | `GET` | `/api/documents/${currentDocId}` | Reads back the created document using `documentGroupId` extracted via JSON Post-Processor |
+| 3 | `PUT UPDATE DOCUMENT` | `PUT` | `/api/documents/${currentDocId}` | Updates the document (triggers auto-versioning), adds `editor-1` to editors list |
+| 4 | `DELETE document` | `DELETE` | `/api/documents/${currentDocId}` | Deletes all versions of the document |
+
+> A **JSON Post-Processor** (`$.documentGroupId`) on the POST sampler chains the `currentDocId` variable across subsequent samplers, creating a realistic correlated CRUD flow.
+
+**Listeners (result collectors):**
+
+| Listener | Purpose |
+|---|---|
+| **View Results Tree** | Per-request detail inspection — request/response headers, body, timing |
+| **Summary Report** | Aggregate statistics table: avg/min/max/P90 latency, throughput, error % |
+| **Graph Results** | Real-time visualization of throughput and response time trends |
+
+#### 2. Todos Test Plans (reference/legacy)
+
+These plans target the `/api/todos` endpoint from the original service template and serve as reference for running JMeter against GitHub Codespaces:
+
+| Test Plan | Target | Threads | Loops | Notes |
+|---|---|---|---|---|
+| `jmeter/todo_test_plan_local.jmx` | `localhost:8080` | 10 | 5 | Local execution, `Content-Type: application/json` header |
+| `jmeter/todo_test_plan_codespace.jmx` | `[codespace]-8080.app.github.dev` | 10 | 5 | Codespace execution, requires `X-Github-Token` header |
+
+#### 3. Standalone Listener Fragments
+
+Reusable JMeter listener fragments that can be imported into any test plan:
+
+| File | Listener Type |
+|---|---|
+| `jmeter/Graph Results_latest.jmx` | Graph Results visualizer |
+| `jmeter/Summary Report_latest.jmx` | Summary Report aggregator |
+| `jmeter/View Results Tree_latest.jmx` | View Results Tree inspector |
+
+#### Running JMeter Tests
+
+```bash
+# GUI mode (interactive, for developing/debugging test plans)
+jmeter -t jmeter/"Test plan for Documents endpoint.jmx"
+
+# CLI mode (headless, for CI/unattended runs)
+jmeter -n -t jmeter/"Test plan for Documents endpoint.jmx" \
+       -l results.jtl \
+       -e -o jmeter-report/
+```
+
+#### wrk Injectors (Docker Compose `perf` profile)
+
+In addition to JMeter, lightweight sustained-load and stress tests are available via Docker Compose:
+
+| Service | Command | Purpose |
+|---|---|---|
+| `wrk-injector-prod-eng-functional` | `wrk -t4 -c10 -d300s /api/users` | Low-concurrency sustained load (10 connections, 5 min) |
+| `wrk-injector-info-perf` | `wrk -t4 -c1000 -d5m --latency /info` | High-concurrency stress test (1000 connections, latency histogram) |
+
+```bash
+# Start the wrk injectors alongside the monitoring stack
+docker compose --profile monitoring --profile perf up -d
+```
 
 - **Metrics measured:** Requests/sec (throughput), P50/P95/P99 latency, error rate, and container CPU/memory via cAdvisor during the load run.
-- **Run performance profile:**
-  ```bash
-  docker compose --profile monitoring --profile perf up -d
-  ```
 
 ---
 
@@ -511,42 +720,6 @@ stateDiagram-v2
 
 ---
 
-## API Documentation
-
-Base URL: `http://localhost:8080`
-
-### Documents (`/api/documents`)
-
-All mutating document endpoints require the `X-User-Id` header for ownership and permission checks.
-
-| Method | Endpoint | Headers | Description | Request Body |
-|--------|----------|---------|-------------|--------------|
-| `POST` | `/api/documents` | `X-User-Id` | Create a new document (v1) | `{ "title", "content", "workspaceId", "viewers", "editors" }` |
-| `GET` | `/api/documents/{groupId}` | — | Get latest version by group ID | — |
-| `PUT` | `/api/documents/{groupId}` | `X-User-Id` | Update document (creates new version) | `{ "title", "content", "viewers", "editors" }` |
-| `PUT` | `/api/documents/add-viewer` | `X-User-Id` | Add viewer to document | `{ "userId", "documentGroupId" }` |
-| `DELETE` | `/api/documents/{groupId}` | `X-User-Id` | Delete all versions (owner only) | — |
-| `GET` | `/api/documents/workspace/{workspaceId}` | — | Get all documents in a workspace | — |
-| `GET` | `/api/documents/owner/{ownerId}` | — | Get all documents by owner | — |
-
-### Document Access Control
-
-| Role | Delete | Add Viewers/Editors | Edit | View |
-|---|---|---|---|---|
-| **Owner** | ✅ | ✅ | ✅ | ✅ |
-| **Workspace Member** | ❌ | ❌ | ✅ | ✅ |
-| **Editor** | ❌ | ❌ | ✅ | ✅ |
-| **Viewer** | ❌ | ❌ | ❌ | ✅ |
-
-### Workspaces (`/api/workspaces`)
-
-| Method | Path | Headers | Description | Request Body |
-|-|-|-|-|-|
-| `GET` | `/statistics/{id}` | — | Get workspace statistics | — |
-| `POST` | `/` | — | Create workspace | `{ "name", "userId" }` |
-| `POST` | `/add-user` | — | Add user to workspace | `{ "userId", "workspaceId" }` |
-
----
 
 ## Contributing
 
