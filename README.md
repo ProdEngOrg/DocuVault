@@ -44,7 +44,7 @@ Arhitectura proiectului este modulară, separând responsabilitățile de izolar
 |---|---|
 | **Isolated Virtual Workspaces** | Spații virtuale unice per utilizator, garantând izolarea datelor și permisiuni granulare de acces |
 | **Document CRUD & Export** | Operațiuni complete pe fișiere virtuale stocate în MongoDB, cu suport pentru descărcare pe client |
-| **HATEOAS API** | Răspunsuri API cu link-uri hypermedia pentru navigare dinamică între resurse |
+| **Restful API** |  |
 | **Automated Versioning** | Creare automată de versiuni noi (v1 → v2 → v3) la fiecare update, fără suprascrierea istoricului |
 
 ### Technical Stack
@@ -53,7 +53,7 @@ Arhitectura proiectului este modulară, separând responsabilitățile de izolar
 |---|---|
 | **Backend** | Spring Boot 3.4.0 (Java 21) |
 | **Database** | MongoDB 6.0 |
-| **API Style** | RESTful / HATEOAS (`spring-boot-starter-hateoas`) |
+| **API Style** | RESTful|
 | **Unit & Integration Testing** | JUnit 5, Mockito, Testcontainers |
 | **Coverage** | JaCoCo |
 | **Performance Testing** | Apache JMeter, wrk |
