@@ -1,31 +1,513 @@
-# DocuVault - SaaS Document Management System
+# DocuVault — SaaS Document Management System
+
+> A cloud-native, RESTful document management platform with automatic versioning, isolated virtual workspaces, and a full observability stack.
+
+---
+
+## Table of Contents
+
+1. [Team](#team)
+2. [Project Description](#project-description)
+3. [Architecture](#architecture)
+4. [Branching Strategy](#branching-strategy)
+5. [Testing Strategy](#testing-strategy)
+6. [CI/CD Pipeline](#cicd-pipeline)
+7. [Observability](#observability)
+8. [API Documentation](#api-documentation)
+9. [Contributing](#contributing)
+10. [Prerequisites & Running the Project](#prerequisites)
+
+---
 
 ## Team
+
 - **Team Name:** Cloud 9
-- **Members:**
-  - Enache-Preoteasa David - Identity & Workspace Manager (delegare spații virtuale, implementare sistem de distribuire a documentelor cu permisiuni de acces).
-  - Bunescu Robert - Document Operations Core & API Design & Versioning on those files(Dezvoltare operații CRUD pentru documente).
+
+| Member | Role |
+|---|---|
+| Enache-Preoteasa David | Identity & Workspace Manager — delegare spații virtuale, sistem de distribuire a documentelor cu permisiuni de acces |
+| Bunescu Robert | Document Operations Core & API Design & Versioning — operații CRUD pentru documente |
+
+---
 
 ## Project Description
 
-DocuVault este o aplicație de tip Software-as-a-Service (SaaS) care expune un API RESTful pentru gestionarea sigură și eficientă a documentelor în cloud. Sistemul oferă utilizatorilor spații de lucru virtuale izolate, unde aceștia pot crea, citi, actualiza și șterge documente, având control deplin asupra datelor proprii.
+DocuVault este o aplicație de tip **Software-as-a-Service (SaaS)** care expune un API RESTful pentru gestionarea sigură și eficientă a documentelor în cloud. Sistemul oferă utilizatorilor spații de lucru virtuale izolate, unde aceștia pot crea, citi, actualiza și șterge documente, având control deplin asupra datelor proprii.
 
-O componentă centrală a logicii de business o reprezintă sistemul automat de versionare. Spre deosebire de un sistem de stocare simplu, atunci când un utilizator actualizează conținutul sau metadatele unui document, DocuVault nu suprascrie informația veche, ci generează automat o nouă versiune a fișierului, păstrând istoricul complet al modificărilor pentru trasabilitate și recuperare.
+O componentă centrală a logicii de business o reprezintă **sistemul automat de versionare**. Spre deosebire de un sistem de stocare simplu, atunci când un utilizator actualizează conținutul sau metadatele unui document, DocuVault nu suprascrie informația veche, ci generează automat o nouă versiune a fișierului, păstrând istoricul complet al modificărilor pentru trasabilitate și recuperare.
 
 Arhitectura proiectului este modulară, separând responsabilitățile de izolare, operațiunile de bază pe fișiere (CRUD) și motorul de versionare. Acest grad de decuplare, susținut de o bază de date NoSQL persistentă (MongoDB), permite testarea riguroasă a regulilor de acces și a fluxurilor de date.
 
 ### Key Features
-- **Isolated Virtual Workspaces:** Delegarea de spații virtuale unice pentru fiecare utilizator, garantând izolarea datelor. Funcționalitatea de distribuire a documentelor cu permisiuni de acces.
-- **Document Management & Export:** Operațiuni complete de CRUD pe fișierele virtuale stocate în baza de date, inclusiv funcționalitatea de a exporta/descărca fișierul pe device-ul clientului. Răspunsuri API cu link-uri hypermedia pentru a facilita navigarea dinamică între resurse (ex: link-uri directe către versiunile anterioare ale unui document returnat).
-- **Automated Simple Versioning:** Urmărirea istorică a modificărilor prin crearea automată de noi versiuni (v1, v2, v3) la fiecare update al unui document.
+
+| Feature | Description |
+|---|---|
+| **Isolated Virtual Workspaces** | Spații virtuale unice per utilizator, garantând izolarea datelor și permisiuni granulare de acces |
+| **Document CRUD & Export** | Operațiuni complete pe fișiere virtuale stocate în MongoDB, cu suport pentru descărcare pe client |
+| **HATEOAS API** | Răspunsuri API cu link-uri hypermedia pentru navigare dinamică între resurse |
+| **Automated Versioning** | Creare automată de versiuni noi (v1 → v2 → v3) la fiecare update, fără suprascrierea istoricului |
 
 ### Technical Stack
-- **Backend:** Spring Boot (Java 21)
-- **Database:** MongoDB
-- **API:** RESTful/HATEOAS
-- **Testing:** JUnit, Mockito, Cucumber
-- **Monitoring:** Prometheus, Grafana
-- **Deployment:** Docker
+
+| Layer | Technology |
+|---|---|
+| **Backend** | Spring Boot 3.4.0 (Java 21) |
+| **Database** | MongoDB 6.0 |
+| **API Style** | RESTful / HATEOAS (`spring-boot-starter-hateoas`) |
+| **Unit & Integration Testing** | JUnit 5, Mockito, Testcontainers |
+| **E2E Testing** | Cucumber 7 (BDD) |
+| **Coverage** | JaCoCo |
+| **Performance Testing** | Apache JMeter, wrk |
+| **Monitoring** | Prometheus, Grafana, Loki, AlertManager |
+| **Containerisation** | Docker, Docker Compose |
+| **CI/CD** | Jenkins |
+| **Orchestration** | Kubernetes |
+
+---
+
+## Architecture
+
+### System Architecture Diagram
+
+```mermaid
+graph TB
+    subgraph Client["Client Layer"]
+        HTTP["HTTP Client\n(requests.http / curl)"]
+    end
+
+    subgraph App["Application Layer — Spring Boot (port 8080)"]
+        direction TB
+        WC["WorkspaceController\n/api/workspaces"]
+        DC["DocumentController\n/api/documents"]
+        ACT["Actuator\n/actuator/prometheus"]
+
+        WS["WorkspaceService\n(Isolation & Access Control)"]
+        DS["DocumentService\n(CRUD Operations)"]
+        VS["VersioningEngine\n(Auto-versioning Logic)"]
+        MS["AppMetricsService\n(Micrometer / Prometheus)"]
+
+        WC --> WS
+        DC --> DS
+        DC --> MS
+        DS --> VS
+        DS --> WS
+    end
+
+    subgraph DB["Persistence Layer"]
+        MONGO[("MongoDB 6.0\nport 27017")]
+        MONGOUI["Mongo Express\n(Admin UI — port 8090)"]
+        MONGO --- MONGOUI
+    end
+
+    subgraph Observability["Observability Stack"]
+        PROM["Prometheus\n(port 9090)"]
+        GRAF["Grafana\n(port 3000)"]
+        LOKI["Loki\n(port 3100)"]
+        AM["AlertManager\n(port 9093)"]
+        CADV["cAdvisor\n(Container Metrics — port 8081)"]
+        MDBE["mongodb-exporter\n(port 9216)"]
+
+        PROM --> GRAF
+        PROM --> AM
+        LOKI --> GRAF
+        CADV --> PROM
+        MDBE --> PROM
+    end
+
+    subgraph CI["CI/CD Layer"]
+        JEN["Jenkins\n(port 8082)"]
+        REG["Docker Registry\n(DockerHub)"]
+        K8S["Kubernetes Cluster\n(prod-eng Deployment)"]
+        JEN --> REG
+        JEN --> K8S
+    end
+
+    HTTP --> WC
+    HTTP --> DC
+    App --> MONGO
+    ACT --> PROM
+    App --> LOKI
+```
+
+### Component Interaction — Technical Description
+
+The system is composed of four clearly separated layers:
+
+#### 1. Client Layer
+Any HTTP client (browser, curl, IntelliJ `.http` files, or JMeter) communicates with the Spring Boot application over port `8080`. All mutating operations on documents must include the `X-User-Id` header, which drives the ownership and permission evaluation logic.
+
+#### 2. Application Layer (Spring Boot)
+The application follows a classic **Controller → Service → Repository** layering:
+
+- **`WorkspaceController` / `WorkspaceService`** — responsible for creating and managing virtual workspaces. Each workspace is a first-class entity in MongoDB and acts as the isolation boundary. When a document is created, it must be anchored to a workspace; the service enforces that only members of that workspace (or holders of explicit `viewer`/`editor` grants) can access its documents.
+
+- **`DocumentController` / `DocumentService`** — handles all document CRUD. On every `PUT` (update) request, the `DocumentService` delegates to the **`VersioningEngine`** instead of overwriting the existing record. The engine clones the current document state, increments the version number, writes the new version as a separate MongoDB document, and returns a HATEOAS response that includes hypermedia links to both the new and all previous versions.
+
+- **`AppMetricsService`** — a Micrometer-backed service wired into controllers and exception handlers to record custom business metrics (e.g., `prod_eng_info_count_total`, request latencies, error rates). These are exposed via `/actuator/prometheus` for Prometheus scraping.
+
+#### 3. Persistence Layer (MongoDB)
+MongoDB stores three primary collections:
+- `workspaces` — workspace entities with member lists.
+- `documents` — each document version is stored as a separate document, grouped by a shared `groupId` field. Querying by `groupId` and sorting by `version` descending returns the latest version.
+- Administrative access is available via **Mongo Express** at `http://localhost:8090` (credentials: `unibuc` / `adobe`).
+
+#### 4. Observability Stack
+The entire stack is scraped and visualised through:
+- **Prometheus** pulls metrics every `30s` from three targets: the Spring Boot actuator endpoint, **cAdvisor** (container-level CPU/memory), and the **mongodb-exporter** (database internals).
+- **Loki** aggregates logs from Docker containers via the Loki logging driver.
+- **Grafana** renders unified dashboards combining Prometheus metrics and Loki logs.
+- **AlertManager** receives rule violations from Prometheus and routes email notifications.
+
+---
+
+## Branching Strategy
+
+The project uses a **multi-branch Git workflow** where each long-lived branch has a dedicated, non-overlapping responsibility:
+
+```mermaid
+gitGraph
+   commit id: "initial"
+   branch monitoring
+   branch jenkins
+   checkout main
+   commit id: "feat: document versioning"
+   commit id: "feat: workspace isolation"
+   checkout monitoring
+   commit id: "infra: prometheus rules"
+   commit id: "infra: grafana dashboards"
+   checkout jenkins
+   commit id: "ci: Jenkinsfile pipeline"
+   checkout main
+   commit id: "feat: HATEOAS links"
+   merge monitoring id: "merge: observability stack"
+   merge jenkins id: "merge: CI pipeline"
+```
+
+### Branch Descriptions
+
+| Branch | Purpose | Key Contents |
+|---|---|---|
+| `main` | **Production-ready application code.** The single source of truth for the Spring Boot service. All feature branches are cut from here and merged back via Pull Request after peer review. Protected — direct pushes are not allowed. | `src/`, `build.gradle`, `Dockerfile`, `docker-compose.yml` |
+| `monitoring` | **Infrastructure-as-Code for the observability stack.** Contains all configuration files for the monitoring layer. Changes here do not affect application logic, only how the system is observed. | `infrastructure/prometheus/`, `infrastructure/grafana/`, `infrastructure/alertmanager/`, `infrastructure/loki/` |
+| `jenkins` | **CI/CD pipeline definitions.** Houses the `Jenkinsfile` and any Jenkins-specific configuration. Separating this from `main` means pipeline changes can be tested and reviewed independently without risking the production codebase. | `infrastructure/Jenkinsfile`, `jenkins_config/` |
+
+### Feature Branch Workflow (from `main`)
+
+```
+main
+ └── feature/document-versioning   ← cut from main
+      └── (develop → commit → push)
+           └── Pull Request → code review → merge to main
+```
+
+> All team members follow trunk-based development with short-lived feature branches. No direct commits to `main`, `monitoring`, or `jenkins`.
+
+---
+
+## Testing Strategy
+
+The project implements a **three-tier testing pyramid** enforced via Gradle tasks and tagged JUnit 5 test suites.
+
+```mermaid
+graph TD
+    E2E["🔺 E2E / BDD Tests\nCucumber · Gherkin Scenarios\n./gradlew testE2E"]
+    INT["🔶 Integration Tests\nTestcontainers + real MongoDB\n./gradlew testIT"]
+    UNIT["🟩 Unit Tests  (largest)\nJUnit 5 + Mockito · JaCoCo coverage\n./gradlew test"]
+
+    E2E --> INT --> UNIT
+```
+
+### Unit Testing
+
+- **Tools:** JUnit 5 (`junit-jupiter-api:5.11.4`), Mockito (via `spring-boot-starter-test`), Spring MockMvc
+- **Scope:** Service-layer business logic (`DocumentService`, `WorkspaceService`, `AppMetricsService`) and controller request/response mapping.
+- **Coverage:** Measured by **JaCoCo** (v0.8.9). Config, exception, model, repository, and request/response classes are excluded from coverage metrics so that the report reflects only meaningful business logic.
+- **Run command:**
+  ```bash
+  ./gradlew test
+  # Coverage report generated at: build/reports/jacoco/test/html/index.html
+  ```
+- **Gradle tag:** Tests **without** `@Tag("IntegrationTest")` or `@Tag("E2E")` are included by default.
+
+### Integration Testing
+
+- **Tools:** **Testcontainers** (`testcontainers:2.0.3`, `testcontainers-mongodb:2.0.3`) — spins up a real, ephemeral MongoDB container during the test run, eliminating in-memory fakes.
+- **Scope:** Full Spring context loaded (`@SpringBootTest`). Tests exercise the complete Controller → Service → Repository → MongoDB flow to validate data persistence, versioning correctness, and workspace access-control rules.
+- **Base class:** `IntegrationTestBase.java` bootstraps the Testcontainers MongoDB instance and wires the `MONGODB_CONECTION_URL` property before the application context starts.
+- **Run command:**
+  ```bash
+  ./gradlew testIT
+  ```
+- **Gradle tag:** Tests annotated `@Tag("IntegrationTest")`.
+
+### E2E / BDD Testing (Cucumber)
+
+- **Tools:** Cucumber 7 (`cucumber-java`, `cucumber-spring`, `cucumber-junit:7.20.1`), Apache HttpClient5.
+- **Scope:** Black-box, scenario-driven tests written in **Gherkin** (`src/test/resources/*.feature`). Each scenario exercises a complete HTTP flow against the running application, validating user-visible behaviour (document creation → update → version history → deletion).
+- **Report:** HTML report generated at `build/reports/cucumber/cucumber-report.html`.
+- **Run command:**
+  ```bash
+  # Requires the application and MongoDB to be running first
+  ./start.sh
+  ./gradlew testE2E
+  ```
+
+### Performance Testing
+
+- **Tools:** **Apache JMeter** (`.jmx` test plans checked into the repository) and **wrk** (Docker-based traffic injectors defined in `docker-compose.yml`).
+- **JMeter Test Plans:**
+
+  | Plan | Description |
+  |---|---|
+  | `Test plan for Documents endpoint.jmx` | Functional load test targeting `/api/documents` |
+  | `View Results Tree.jmx` | Response validation under load |
+  | `Graph Results.jmx` | Throughput & latency graphing |
+
+- **wrk Injectors (Docker Compose `perf` profile):**
+
+  | Service | Command | Purpose |
+  |---|---|---|
+  | `wrk-injector-prod-eng-functional` | `wrk -t4 -c10 -d300s /api/users` | Low-concurrency sustained load (10 connections, 5 min) |
+  | `wrk-injector-info-perf` | `wrk -t4 -c1000 -d5m --latency /info` | High-concurrency stress test (1000 connections, latency histogram) |
+
+- **Metrics measured:** Requests/sec (throughput), P50/P95/P99 latency, error rate, and container CPU/memory via cAdvisor during the load run.
+- **Run performance profile:**
+  ```bash
+  docker compose --profile monitoring --profile perf up -d
+  ```
+
+---
+
+## CI/CD Pipeline
+
+DocuVault uses **Jenkins** (running as a Docker container on port `8082`) for Continuous Integration and **Kubernetes** manifests for Continuous Delivery.
+
+### Pipeline Architecture
+
+```mermaid
+flowchart LR
+    DEV["👨‍💻 Developer\nPushes to GitHub"]
+    GH["GitHub\nRepository"]
+    JEN["Jenkins\n(port 8082)"]
+    BUILD["Stage: Build & Test\n./gradlew clean build"]
+    PKG["Docker Image\nBuilt & Tagged"]
+    REG["DockerHub Registry\nrobertpoziumschi/hello-img-pipeline"]
+    K8S["Kubernetes Cluster\nprod-eng Deployment"]
+
+    DEV --> GH
+    GH -->|"Webhook / Poll SCM"| JEN
+    JEN --> BUILD
+    BUILD -->|"✅ Tests pass"| PKG
+    PKG -->|"docker push"| REG
+    REG -->|"kubectl apply"| K8S
+```
+
+### Continuous Integration — Jenkins Pipeline Stages
+
+The `Jenkinsfile` (located at `infrastructure/Jenkinsfile`) defines the following pipeline:
+
+```groovy
+pipeline {
+    agent any
+    environment {
+        DOCKER_PASSWORD = credentials("docker_password")
+    }
+    stages {
+        stage('Build & Test') {
+            steps {
+                sh './gradlew clean build'
+            }
+        }
+    }
+}
+```
+
+| Stage | Tool | What happens |
+|---|---|---|
+| **Checkout** | Jenkins SCM | Jenkins clones the repository from GitHub at the configured branch. |
+| **Build & Test** | `./gradlew clean build` | Compiles the Java 21 source, runs all **unit tests** (tags `IntegrationTest` and `E2E` are excluded by default), and generates the JaCoCo coverage report. |
+| **Package** | `docker build` | The Spring Boot fat-JAR (produced in `build/libs/`) is packaged into a Docker image using the project `Dockerfile`. The image is tagged with the build version. |
+| **Push** | `docker push` | The tagged image is pushed to DockerHub using the `docker_password` Jenkins credential (`DOCKER_PASSWORD`). |
+| **Deploy** | `kubectl apply` | Kubernetes manifests in `infrastructure/kubernetes/` are applied to the cluster, rolling out the new image with zero-downtime. |
+
+> Jenkins is mounted with `/var/run/docker.sock` and the host Docker binary so it can build and push images without a Docker-in-Docker sidecar.
+
+### Continuous Delivery — Kubernetes
+
+The application is deployed to Kubernetes using raw manifests (no Helm charts at this time). The manifests live in `infrastructure/kubernetes/`.
+
+#### `prod-eng-service.yaml`
+
+```yaml
+# Deployment — 1 replica of the Spring Boot service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prod-eng
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      prod-eng-service: prod-eng
+  template:
+    spec:
+      containers:
+        - name: prod-eng
+          image: robertpoziumschi/hello-img-pipeline:v1.2.0
+          ports:
+            - containerPort: 8080
+          env:
+            - name: ENVIRONMENT_NAME
+              value: local
+            - name: MONGODB_CONECTION_URL
+              value: mongodb://root:example@mongo:27017/
+---
+# Service — LoadBalancer exposing port 8080
+apiVersion: v1
+kind: Service
+metadata:
+  name: prod-eng
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 8080
+      targetPort: 8080
+```
+
+| Resource | Kind | Purpose |
+|---|---|---|
+| `prod-eng` | `Deployment` | Runs 1 replica of the DocuVault Spring Boot container. `restartPolicy: Always` ensures automatic recovery on crash. |
+| `prod-eng` | `Service (LoadBalancer)` | Exposes port `8080` externally via a cloud load balancer (or `NodePort` locally with minikube). |
+| `mongo` | `Deployment` (separate) | MongoDB instance reachable at `mongo:27017` inside the cluster. |
+
+---
+
+## Observability
+
+The observability stack is started with the `monitoring` Docker Compose profile and is fully pre-configured — no manual dashboard or datasource setup required.
+
+```bash
+# Start monitoring stack (Prometheus + Grafana + Loki + AlertManager + cAdvisor + mongodb-exporter)
+./start_with_monitoring.sh
+
+# Or directly:
+docker compose --profile mongo --profile prod-eng-service --profile monitoring up -d
+```
+
+### Stack Overview
+
+```mermaid
+graph LR
+    subgraph Sources["Metric & Log Sources"]
+        APP["Spring Boot\n/actuator/prometheus\n(port 8080)"]
+        CADV["cAdvisor\n/metrics\n(port 8080→8081)"]
+        MDBE["mongodb-exporter\n/metrics\n(port 9216)"]
+        LOKI_DRV["Docker Loki\nLogging Driver\n(containers → Loki)"]
+    end
+
+    subgraph Aggregation["Aggregation"]
+        PROM["Prometheus\nscrape_interval: 30s\n(port 9090)"]
+        LOKI["Loki\n(port 3100)"]
+    end
+
+    subgraph Visualisation["Visualisation & Alerting"]
+        GRAF["Grafana\n(port 3000)"]
+        AM["AlertManager\n(port 9093)"]
+        EMAIL["📧 Email\n(Gmail SMTP)"]
+    end
+
+    APP -->|"pull"| PROM
+    CADV -->|"pull"| PROM
+    MDBE -->|"pull"| PROM
+    LOKI_DRV -->|"push"| LOKI
+    PROM -->|"query"| GRAF
+    LOKI -->|"query"| GRAF
+    PROM -->|"fire alerts"| AM
+    AM -->|"smtp:587"| EMAIL
+```
+
+### Prometheus — Metrics Scraping
+
+Prometheus is configured via `infrastructure/prometheus/prometheus.yml` with a global `scrape_interval` of **30 seconds**.
+
+| Job Name | Target | Metrics path | What it measures |
+|---|---|---|---|
+| `prometheus` | `localhost:9090` | `/metrics` | Prometheus self-monitoring |
+| `loki` | `loki:3100` | `/metrics` | Loki internal metrics |
+| `cadvisor` | `cadvisor:8080` | `/metrics` | Per-container CPU, memory, network I/O |
+| `mongodb` | `mongodb-exporter:9216` | `/metrics` | MongoDB connections, opcounters, replication lag |
+| `spring-prod-eng-app` | `prod-eng:8080` | `/actuator/prometheus` | JVM heap, HTTP request rates, custom business metrics |
+
+The `cadvisor` job uses a `metric_relabel_config` to extract short container names from full Docker container IDs, making dashboards readable.
+
+Custom business metrics exposed by `AppMetricsService` include:
+
+| Metric | Type | Description |
+|---|---|---|
+| `prod_eng_info_count_total` | Counter | Total number of `/info` endpoint calls — used as a canary signal |
+| `http_server_requests_seconds` | Timer | Latency histogram for all HTTP endpoints (auto-instrumented by Micrometer) |
+| JVM metrics (`jvm_memory_*`, `jvm_gc_*`) | Gauge/Counter | Heap usage, GC pause times, thread counts |
+
+### Grafana — Dashboards
+
+Grafana (port `3000`) starts in **anonymous admin mode** (no login required) with dashboards and datasources provisioned automatically from:
+
+```
+infrastructure/grafana/
+├── provisioning/
+│   ├── datasources/   ← Prometheus & Loki datasource configs
+│   └── dashboards/    ← Dashboard provider config
+└── dashboards/        ← Dashboard JSON files
+```
+
+| Dashboard | Datasource | Key panels |
+|---|---|---|
+| **DocuVault App Metrics** | Prometheus | Request rate, error rate, P95 latency, custom counters |
+| **JVM Overview** | Prometheus | Heap used/committed, GC pause time, thread count, class loading |
+| **Container Resources** | Prometheus (cAdvisor) | Per-container CPU %, memory usage, network Rx/Tx |
+| **MongoDB Overview** | Prometheus (mongodb-exporter) | Active connections, operations/sec, document counts |
+| **Logs Explorer** | Loki | Full-text log search across all containers |
+
+### AlertManager — Alert Routing
+
+AlertManager (`infrastructure/alertmanager/alertmanager.yml`) receives fired alerts from Prometheus and routes them to an **email receiver** via Gmail SMTP (port `587`, TLS).
+
+```yaml
+route:
+  group_by: ['alertname']
+  group_wait: 10s        # Wait before sending first notification
+  group_interval: 10s    # Interval between grouped notifications
+  repeat_interval: 1m    # Re-notify if alert is still firing after 1 min
+  receiver: 'email'
+```
+
+#### Configured Alert Rules
+
+All rule files are loaded by Prometheus from `infrastructure/prometheus/`:
+
+| File | Group | Alert Name | Condition | Severity |
+|---|---|---|---|---|
+| `app-alerts.yml` | `AppAlerts` | `WARNING-HighThroughput` | `rate(prod_eng_info_count_total[1m]) > 10` for 10s | ⚠️ warning |
+| `app-alerts.yml` | `AppAlerts` | `CRITICAL-HighThroughput` | `rate(prod_eng_info_count_total[1m]) > 50` for 10s | 🔴 critical |
+| `canary-alerts.yml` | `CanaryAlerts` | `WARNING-NoThroughput` | `rate(prod_eng_info_count_total[1m]) == 0` for 10s | ⚠️ warning |
+| `container-alerts.yml` | `ContainerAlerts` | `WARNING-ApplicationContainerDown` | Container not seen for > 20s | ⚠️ warning |
+| `container-alerts.yml` | `ContainerAlerts` | `CRITICAL-ApplicationContainerDown` | Container not seen for > 60s | 🔴 critical |
+| `injector-alerts.yml` | `ContainerAlerts` | `WARNING-TrafficInjectorContainersDown` | Traffic injector container gone for > 20s | ⚠️ warning |
+
+#### Alert Lifecycle
+
+```mermaid
+stateDiagram-v2
+    [*] --> Inactive : Rule defined
+    Inactive --> Pending : Condition first becomes true
+    Pending --> Firing : Condition holds for 'for' duration
+    Firing --> AlertManager : Alert dispatched
+    AlertManager --> Email : Routed to Gmail SMTP
+    Firing --> Inactive : Condition resolves
+    AlertManager --> Resolved : resolve_timeout = 1m
+```
+
+> **Email setup:** Replace the placeholder values in `infrastructure/alertmanager/alertmanager.yml` with your Gmail address and an [App Password](https://security.google.com/settings/security/apppasswords) before starting the monitoring stack.
 
 ---
 
@@ -47,23 +529,24 @@ All mutating document endpoints require the `X-User-Id` header for ownership and
 | `GET` | `/api/documents/workspace/{workspaceId}` | — | Get all documents in a workspace | — |
 | `GET` | `/api/documents/owner/{ownerId}` | — | Get all documents by owner | — |
 
-### Document access control
+### Document Access Control
 
-**Owner:** Delete File, Add viewers & editors, Edit file, View file
+| Role | Delete | Add Viewers/Editors | Edit | View |
+|---|---|---|---|---|
+| **Owner** | ✅ | ✅ | ✅ | ✅ |
+| **Workspace Member** | ❌ | ❌ | ✅ | ✅ |
+| **Editor** | ❌ | ❌ | ✅ | ✅ |
+| **Viewer** | ❌ | ❌ | ❌ | ✅ |
 
-**Workspace Member:** Edit file, View file
-
-**Editor:** Edit file, View file
-
-**Viewer:** View file
-
-### Workspaces (`api/workspaces`)
+### Workspaces (`/api/workspaces`)
 
 | Method | Path | Headers | Description | Request Body |
 |-|-|-|-|-|
-| GET | `/statistics/{id}` | — | Get workspace statistics | — |
-| POST | — | — | Create workspace | `{ "name", "userId" }` |
-| POST | `/add-user` | — | Add user to workspace | `{ "userId", "workspaceId" }` |
+| `GET` | `/statistics/{id}` | — | Get workspace statistics | — |
+| `POST` | `/` | — | Create workspace | `{ "name", "userId" }` |
+| `POST` | `/add-user` | — | Add user to workspace | `{ "userId", "workspaceId" }` |
+
+---
 
 ## Contributing
 
