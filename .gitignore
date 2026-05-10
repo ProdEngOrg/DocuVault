@@ -55,3 +55,5 @@ workspaces/
 *_local.jmx
 Graph Results.jmx
 View Results Tree.jmx
+*.jtl
+jmeter/report/

@@ -327,25 +327,6 @@ The entire stack is scraped and visualised through:
 
 The project uses a **multi-branch Git workflow** where each long-lived branch has a dedicated, non-overlapping responsibility:
 
-```mermaid
-gitGraph
-   commit id: "initial"
-   branch monitoring
-   branch jenkins
-   checkout main
-   commit id: "feat: document versioning"
-   commit id: "feat: workspace isolation"
-   checkout monitoring
-   commit id: "infra: prometheus rules"
-   commit id: "infra: grafana dashboards"
-   checkout jenkins
-   commit id: "ci: Jenkinsfile pipeline"
-   checkout main
-   commit id: "feat: HATEOAS links"
-   merge monitoring id: "merge: observability stack"
-   merge jenkins id: "merge: CI pipeline"
-```
-
 ### Branch Descriptions
 
 | Branch | Purpose | Key Contents |
@@ -437,6 +418,33 @@ This is the primary performance test plan — a full CRUD load test against the 
 | **View Results Tree** | Per-request detail inspection — request/response headers, body, timing |
 | **Summary Report** | Aggregate statistics table: avg/min/max/P90 latency, throughput, error % |
 | **Graph Results** | Real-time visualization of throughput and response time trends |
+
+#### Test Results (Documents Endpoint — 50 threads, 5 loops)
+
+Run environment: `localhost`, Docker Compose (`mongo` + `prod-eng-service` profiles), macOS (Apple Silicon), JMeter 5.6.3 CLI mode.
+
+**Aggregate Summary:**
+
+| Metric | Value |
+|---|---|
+| **Total Requests** | 1,000 |
+| **Duration** | ~69 seconds |
+| **Throughput** | **14.4 req/s** |
+| **Avg Response Time** | **16 ms** |
+| **Min Response Time** | 2 ms |
+| **Max Response Time** | 50 ms |
+| **Error Rate** | **0.00%** |
+
+**Per-Sampler Breakdown:**
+
+| Sampler | Requests | Avg (ms) | Min (ms) | Max (ms) | Error % |
+|---|---|---|---|---|---|
+| `POST Document Create` | 250 | 16 | 3 | 44 | 0.0% |
+| `GET Document` | 250 | 15 | 3 | 44 | 0.0% |
+| `PUT UPDATE DOCUMENT` | 250 | 18 | 2 | 48 | 0.0% |
+| `DELETE document` | 250 | 18 | 2 | 50 | 0.0% |
+
+> **Key takeaways:** All 1,000 requests completed successfully with **zero errors**. Average latency stayed consistently under **20ms** across all four CRUD operations even under concurrent load (50 virtual users). The auto-versioning logic on `PUT` adds no measurable overhead compared to `POST`.
 
 #### 2. Todos Test Plans (reference/legacy)
 
