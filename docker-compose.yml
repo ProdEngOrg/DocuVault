@@ -56,6 +56,10 @@ services:
   cadvisor: # container metric prometheus exporter
     image: gcr.io/cadvisor/cadvisor:v0.51.0
     container_name: cadvisor
+    command:
+      - --docker_only=true
+      - --store_container_labels=true
+      - --whitelisted_container_labels=com.docker.compose.service
     ports:
       - "8081:8080"
     volumes:
@@ -70,6 +74,10 @@ services:
   mongodb-exporter:
     image: percona/mongodb_exporter:0.40
     container_name: mongodb-exporter
+    command:
+      - --mongodb.uri=mongodb://root:example@mongo:27017
+      - --compatible-mode
+      - --collect-all
     environment:
       - MONGODB_URI=mongodb://root:example@mongo:27017
     restart: always

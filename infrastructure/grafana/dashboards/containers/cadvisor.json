@@ -92,10 +92,10 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(rate(container_cpu_usage_seconds_total{instance=~\"$host\",name=~\"$container\",name=~\".+\"}[5m])) by (name) *100",
+          "expr": "sum(rate(container_cpu_usage_seconds_total{instance=~\"$host\",id=~\"$container\"}[5m])) by (id) *100",
           "hide": false,
           "interval": "",
-          "legendFormat": "{{name}}",
+          "legendFormat": "{{id}}",
           "refId": "A"
         }
       ],
@@ -195,10 +195,10 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(container_memory_rss{instance=~\"$host\",name=~\"$container\",name=~\".+\"}) by (name)",
+          "expr": "sum(container_memory_rss{instance=~\"$host\",id=~\"$container\"}) by (id)",
           "hide": false,
           "interval": "",
-          "legendFormat": "{{name}}",
+          "legendFormat": "{{id}}",
           "refId": "A"
         }
       ],
@@ -281,10 +281,10 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(container_memory_cache{instance=~\"$host\",name=~\"$container\",name=~\".+\"}) by (name)",
+          "expr": "sum(container_memory_cache{instance=~\"$host\",id=~\"$container\"}) by (id)",
           "hide": false,
           "interval": "",
-          "legendFormat": "{{name}}",
+          "legendFormat": "{{id}}",
           "refId": "A"
         }
       ],
@@ -386,10 +386,10 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(rate(container_network_receive_bytes_total{instance=~\"$host\",name=~\"$container\",name=~\".+\"}[5m])) by (name)",
+          "expr": "sum(rate(container_network_receive_bytes_total{instance=~\"$host\",id=~\"$container\"}[5m])) by (id)",
           "hide": false,
           "interval": "",
-          "legendFormat": "{{name}}",
+          "legendFormat": "{{id}}",
           "refId": "A"
         }
       ],
@@ -472,9 +472,9 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(rate(container_network_transmit_bytes_total{instance=~\"$host\",name=~\"$container\",name=~\".+\"}[5m])) by (name)",
+          "expr": "sum(rate(container_network_transmit_bytes_total{instance=~\"$host\",id=~\"$container\"}[5m])) by (id)",
           "interval": "",
-          "legendFormat": "{{name}}",
+          "legendFormat": "{{id}}",
           "refId": "A"
         }
       ],
@@ -616,11 +616,11 @@
       "pluginVersion": "8.4.3",
       "targets": [
         {
-          "expr": "(time() - container_start_time_seconds{instance=~\"$host\",name=~\"$container\",name=~\".+\"})/86400",
+          "expr": "(time() - container_start_time_seconds{instance=~\"$host\",id=~\"$container\"})/86400",
           "format": "table",
           "instant": true,
           "interval": "",
-          "legendFormat": "{{name}}",
+          "legendFormat": "{{id}}",
           "refId": "A"
         }
       ],
@@ -713,7 +713,7 @@
           "type": "prometheus",
           "uid": "PBFA97CFB590B2093"
         },
-        "definition": "label_values({__name__=~\"container.*\", instance=~\"$host\"},name)",
+        "definition": "label_values({__name__=~\"container.*\", instance=~\"$host\"},id)",
         "hide": 0,
         "includeAll": true,
         "label": "Container",
@@ -721,13 +721,13 @@
         "name": "container",
         "options": [],
         "query": {
-          "query": "label_values({__name__=~\"container.*\", instance=~\"$host\"},name)",
+          "query": "label_values({__name__=~\"container.*\", instance=~\"$host\"},id)",
           "refId": "Prometheus-container-Variable-Query"
         },
         "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
-        "sort": 0,
+        "sort": 1,
         "tagValuesQuery": "",
         "tagsQuery": "",
         "type": "query",

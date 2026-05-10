@@ -14,6 +14,11 @@ scrape_configs:
     metrics_path: '/metrics'
     static_configs:
       - targets: ['cadvisor:8080']
+    metric_relabel_configs:
+      - source_labels: [id]
+        regex: '.*/docker/([a-f0-9]{12})[a-f0-9]*'
+        target_label: name
+        replacement: '$1'
   - job_name: 'mongodb'
     metrics_path: '/metrics'
     static_configs:
@@ -28,6 +33,7 @@ rule_files:
   - app-alerts.yml
   - canary-alerts.yml
   - container-alerts.yml
+  - custom-alerts.yml
 
 alerting:
   alertmanagers:
