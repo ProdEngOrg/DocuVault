@@ -306,7 +306,7 @@ The application follows a classic **Controller → Service → Repository** laye
 
 - **`WorkspaceController` / `WorkspaceService`** — responsible for creating and managing virtual workspaces. Each workspace is a first-class entity in MongoDB and acts as the isolation boundary. When a document is created, it must be anchored to a workspace; the service enforces that only members of that workspace (or holders of explicit `viewer`/`editor` grants) can access its documents.
 
-- **`DocumentController` / `DocumentService`** — handles all document CRUD. On every `PUT` (update) request, the `DocumentService` delegates to the **`VersioningEngine`** instead of overwriting the existing record. The engine clones the current document state, increments the version number, writes the new version as a separate MongoDB document, and returns a HATEOAS response that includes hypermedia links to both the new and all previous versions.
+- **`DocumentController` / `DocumentService`** — handles document CRUD and the application’s document-version persistence rules. Rather than exposing a separate `VersioningEngine`, the service works directly with the persistence layer to create and retrieve document versions stored as separate MongoDB records grouped by `groupId`. API payloads are returned through `DocumentResponse`, which is a plain response model and does not include HATEOAS-style hypermedia links.
 
 - **`AppMetricsService`** — a Micrometer-backed service wired into controllers and exception handlers to record custom business metrics (e.g., `prod_eng_info_count_total`, request latencies, error rates). These are exposed via `/actuator/prometheus` for Prometheus scraping.
 
