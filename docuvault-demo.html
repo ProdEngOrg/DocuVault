@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DocuVault — API Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface2: #21262d;
+    --border: #30363d;
+    --accent: #00bfa5;
+    --accent2: #0097a7;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --success: #3fb950;
+    --error: #f85149;
+    --warning: #d29922;
+    --post: #3fb950;
+    --get: #58a6ff;
+    --put: #d29922;
+    --delete: #f85149;
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; }
+
+  /* ── Sidebar ── */
+  #sidebar {
+    width: 280px; min-width: 280px; background: var(--surface); border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+  #sidebar-header {
+    padding: 20px 18px 14px; border-bottom: 1px solid var(--border);
+  }
+  #sidebar-header h1 { font-size: 1.15rem; font-weight: 700; color: var(--accent); letter-spacing: -0.5px; }
+  #sidebar-header p { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+
+  #base-url-row {
+    padding: 10px 14px; background: var(--surface2); border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 8px;
+  }
+  #base-url-row label { font-size: 0.7rem; color: var(--muted); white-space: nowrap; }
+  #base-url { flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+    color: var(--text); font-size: 0.72rem; font-family: 'JetBrains Mono', monospace;
+    padding: 4px 8px; outline: none; }
+  #base-url:focus { border-color: var(--accent); }
+
+  #endpoints-list { overflow-y: auto; flex: 1; padding: 10px 0; }
+  .group-label { font-size: 0.65rem; font-weight: 600; color: var(--muted); text-transform: uppercase;
+    letter-spacing: 1px; padding: 12px 18px 4px; }
+  .ep-btn {
+    display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 18px;
+    background: none; border: none; cursor: pointer; text-align: left; transition: background .15s;
+  }
+  .ep-btn:hover { background: var(--surface2); }
+  .ep-btn.active { background: rgba(0,191,165,.1); border-right: 2px solid var(--accent); }
+  .method-badge {
+    font-size: 0.6rem; font-weight: 700; padding: 2px 6px; border-radius: 4px; min-width: 44px;
+    text-align: center; font-family: 'JetBrains Mono', monospace; letter-spacing: .5px;
+  }
+  .m-POST  { background: rgba(63,185,80,.15);  color: var(--post); }
+  .m-GET   { background: rgba(88,166,255,.15); color: var(--get); }
+  .m-PUT   { background: rgba(210,153,34,.15); color: var(--put); }
+  .m-DELETE{ background: rgba(248,81,73,.15);  color: var(--delete); }
+  .ep-name { font-size: 0.73rem; color: var(--text); font-family: 'JetBrains Mono', monospace;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* ── Main panel ── */
+  #main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  #main-header {
+    padding: 16px 24px; border-bottom: 1px solid var(--border); background: var(--surface);
+    display: flex; align-items: center; gap: 14px;
+  }
+  #active-method { font-size: 0.8rem; font-weight: 700; padding: 4px 10px; border-radius: 6px; font-family: 'JetBrains Mono', monospace; }
+  #active-path { font-size: 0.9rem; font-family: 'JetBrains Mono', monospace; color: var(--text); }
+  #active-desc { font-size: 0.75rem; color: var(--muted); margin-left: auto; max-width: 340px; text-align: right; }
+
+  #panels { display: flex; flex: 1; overflow: hidden; }
+
+  /* ── Request panel ── */
+  #request-panel {
+    width: 420px; min-width: 380px; border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; overflow-y: auto; padding: 20px;
+    gap: 16px;
+  }
+  .section-title { font-size: 0.7rem; font-weight: 600; color: var(--muted); text-transform: uppercase;
+    letter-spacing: 1px; margin-bottom: 8px; }
+  .field-group { display: flex; flex-direction: column; gap: 10px; }
+  .field { display: flex; flex-direction: column; gap: 4px; }
+  .field label { font-size: 0.72rem; color: var(--muted); }
+  .field label span.req { color: var(--error); margin-left: 2px; }
+  .field input, .field textarea {
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
+    color: var(--text); font-size: 0.82rem; padding: 8px 12px; outline: none;
+    font-family: 'JetBrains Mono', monospace; transition: border .15s;
+  }
+  .field input:focus, .field textarea:focus { border-color: var(--accent); }
+  .field textarea { resize: vertical; min-height: 130px; }
+
+  #send-btn {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border: none; border-radius: 8px; color: #000; font-weight: 700; font-size: 0.85rem;
+    padding: 11px 0; cursor: pointer; width: 100%; letter-spacing: .5px;
+    transition: opacity .2s, transform .1s; margin-top: 4px;
+  }
+  #send-btn:hover { opacity: .9; }
+  #send-btn:active { transform: scale(.98); }
+
+  /* ── Response panel ── */
+  #response-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 20px; gap: 12px; }
+  #response-meta { display: flex; align-items: center; gap: 12px; }
+  #status-badge {
+    font-size: 0.78rem; font-weight: 700; padding: 4px 12px; border-radius: 20px;
+    font-family: 'JetBrains Mono', monospace; background: var(--surface2); color: var(--muted);
+  }
+  #status-badge.ok  { background: rgba(63,185,80,.15);  color: var(--success); }
+  #status-badge.err { background: rgba(248,81,73,.15);  color: var(--error); }
+  #latency { font-size: 0.72rem; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
+
+  #response-body {
+    flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    overflow-y: auto; padding: 16px; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem;
+    line-height: 1.6; white-space: pre-wrap; word-break: break-all;
+  }
+  #empty-state {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    height: 100%; color: var(--muted); gap: 10px;
+  }
+  #empty-state .icon { font-size: 2.5rem; }
+  #empty-state p { font-size: 0.82rem; }
+
+  /* JSON syntax highlight */
+  .json-key    { color: #79c0ff; }
+  .json-str    { color: #a5d6ff; }
+  .json-num    { color: #f2cc60; }
+  .json-bool   { color: #ff7b72; }
+  .json-null   { color: var(--muted); }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* Loading spinner */
+  #spinner {
+    display: none; width: 18px; height: 18px; border: 2px solid var(--border);
+    border-top-color: var(--accent); border-radius: 50%; animation: spin .6s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<nav id="sidebar">
+  <div id="sidebar-header">
+    <h1>🗃 DocuVault</h1>
+    <p>API Demo — localhost:8080</p>
+  </div>
+  <div id="base-url-row">
+    <label>Base URL</label>
+    <input id="base-url" value="http://localhost:8080" />
+  </div>
+  <div id="endpoints-list">
+    <div class="group-label">Documents</div>
+    <button class="ep-btn" onclick="selectEndpoint('createDoc')">
+      <span class="method-badge m-POST">POST</span><span class="ep-name">/api/documents</span>
+    </button>
+    <button class="ep-btn" onclick="selectEndpoint('getDoc')">
+      <span class="method-badge m-GET">GET</span><span class="ep-name">/api/documents/{groupId}</span>
+    </button>
+    <button class="ep-btn" onclick="selectEndpoint('updateDoc')">
+      <span class="method-badge m-PUT">PUT</span><span class="ep-name">/api/documents/{groupId}</span>
+    </button>
+    <button class="ep-btn" onclick="selectEndpoint('addViewer')">
+      <span class="method-badge m-PUT">PUT</span><span class="ep-name">/api/documents/add-viewer</span>
+    </button>
+    <button class="ep-btn" onclick="selectEndpoint('deleteDoc')">
+      <span class="method-badge m-DELETE">DELETE</span><span class="ep-name">/api/documents/{groupId}</span>
+    </button>
+    <button class="ep-btn" onclick="selectEndpoint('docsByWorkspace')">
+      <span class="method-badge m-GET">GET</span><span class="ep-name">/api/documents/workspace/{id}</span>
+    </button>
+    <button class="ep-btn" onclick="selectEndpoint('docsByOwner')">
+      <span class="method-badge m-GET">GET</span><span class="ep-name">/api/documents/owner/{id}</span>
+    </button>
+    <div class="group-label">Workspaces</div>
+    <button class="ep-btn" onclick="selectEndpoint('createWorkspace')">
+      <span class="method-badge m-POST">POST</span><span class="ep-name">/api/workspaces</span>
+    </button>
+    <button class="ep-btn" onclick="selectEndpoint('addUserWs')">
+      <span class="method-badge m-POST">POST</span><span class="ep-name">/api/workspaces/add-user</span>
+    </button>
+    <button class="ep-btn" onclick="selectEndpoint('wsStats')">
+      <span class="method-badge m-GET">GET</span><span class="ep-name">/api/workspaces/statistics/{id}</span>
+    </button>
+    <div class="group-label">Users</div>
+    <button class="ep-btn" onclick="selectEndpoint('createUser')">
+      <span class="method-badge m-POST">POST</span><span class="ep-name">/api/users</span>
+    </button>
+    <button class="ep-btn" onclick="selectEndpoint('getUsers')">
+      <span class="method-badge m-GET">GET</span><span class="ep-name">/api/users</span>
+    </button>
+  </div>
+</nav>
+
+<!-- Main -->
+<div id="main">
+  <div id="main-header">
+    <span id="active-method" class="method-badge">—</span>
+    <span id="active-path" style="color:var(--muted)">Select an endpoint</span>
+    <span id="active-desc"></span>
+  </div>
+  <div id="panels">
+    <!-- Request -->
+    <div id="request-panel">
+      <div>
+        <div class="section-title">Headers</div>
+        <div class="field-group" id="headers-fields"></div>
+      </div>
+      <div>
+        <div class="section-title">Path Parameters</div>
+        <div class="field-group" id="path-fields"></div>
+      </div>
+      <div id="body-section" style="display:none">
+        <div class="section-title">Request Body (JSON)</div>
+        <div class="field">
+          <textarea id="body-input" spellcheck="false"></textarea>
+        </div>
+      </div>
+      <button id="send-btn" onclick="sendRequest()">▶ Send Request</button>
+    </div>
+
+    <!-- Response -->
+    <div id="response-panel">
+      <div id="response-meta">
+        <span id="status-badge">Waiting…</span>
+        <span id="latency"></span>
+        <div id="spinner"></div>
+      </div>
+      <div id="response-body">
+        <div id="empty-state">
+          <span class="icon">📡</span>
+          <p>Select an endpoint and send a request</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const ENDPOINTS = {
+  createDoc: {
+    method: 'POST', path: '/api/documents',
+    desc: 'Create a new document (v1). Owner = X-User-Id.',
+    headers: [{ name: 'X-User-Id', placeholder: 'user-1', required: true },
+              { name: 'Content-Type', placeholder: 'application/json', required: false, fixed: 'application/json' }],
+    pathParams: [],
+    body: `{\n  "title": "My First Document",\n  "content": "Hello, DocuVault!",\n  "workspaceId": "ws-1",\n  "viewers": [],\n  "editors": []\n}`
+  },
+  getDoc: {
+    method: 'GET', path: '/api/documents/{groupId}',
+    desc: 'Get the latest version of a document by its group ID.',
+    headers: [],
+    pathParams: [{ name: 'groupId', placeholder: 'uuid-here', required: true }],
+    body: null
+  },
+  updateDoc: {
+    method: 'PUT', path: '/api/documents/{groupId}',
+    desc: 'Update document — creates a new version automatically.',
+    headers: [{ name: 'X-User-Id', placeholder: 'user-1', required: true },
+              { name: 'Content-Type', placeholder: 'application/json', fixed: 'application/json' }],
+    pathParams: [{ name: 'groupId', placeholder: 'uuid-here', required: true }],
+    body: `{\n  "title": "Updated Title",\n  "content": "Updated content here.",\n  "viewers": [],\n  "editors": ["editor-1"]\n}`
+  },
+  addViewer: {
+    method: 'PUT', path: '/api/documents/add-viewer',
+    desc: 'Grant view access to another user. Owner only.',
+    headers: [{ name: 'X-User-Id', placeholder: 'owner-id', required: true },
+              { name: 'Content-Type', placeholder: 'application/json', fixed: 'application/json' }],
+    pathParams: [],
+    body: `{\n  "userId": "viewer-user-id",\n  "documentGroupId": "uuid-here"\n}`
+  },
+  deleteDoc: {
+    method: 'DELETE', path: '/api/documents/{groupId}',
+    desc: 'Delete ALL versions of a document. Owner only.',
+    headers: [{ name: 'X-User-Id', placeholder: 'user-1', required: true }],
+    pathParams: [{ name: 'groupId', placeholder: 'uuid-here', required: true }],
+    body: null
+  },
+  docsByWorkspace: {
+    method: 'GET', path: '/api/documents/workspace/{workspaceId}',
+    desc: 'Get all documents belonging to a workspace.',
+    headers: [],
+    pathParams: [{ name: 'workspaceId', placeholder: 'ws-1', required: true }],
+    body: null
+  },
+  docsByOwner: {
+    method: 'GET', path: '/api/documents/owner/{ownerId}',
+    desc: 'Get all documents owned by a specific user.',
+    headers: [],
+    pathParams: [{ name: 'ownerId', placeholder: 'user-1', required: true }],
+    body: null
+  },
+  createWorkspace: {
+    method: 'POST', path: '/api/workspaces',
+    desc: 'Create a new workspace. Creator is added as first member.',
+    headers: [{ name: 'Content-Type', placeholder: 'application/json', fixed: 'application/json' }],
+    pathParams: [],
+    body: `{\n  "name": "My Workspace",\n  "userId": "user-1"\n}`
+  },
+  addUserWs: {
+    method: 'POST', path: '/api/workspaces/add-user',
+    desc: 'Add an existing user to an existing workspace.',
+    headers: [{ name: 'Content-Type', placeholder: 'application/json', fixed: 'application/json' }],
+    pathParams: [],
+    body: `{\n  "userId": "user-2",\n  "workspaceId": "ws-id-here"\n}`
+  },
+  wsStats: {
+    method: 'GET', path: '/api/workspaces/statistics/{id}',
+    desc: 'Get member count and document count for a workspace.',
+    headers: [],
+    pathParams: [{ name: 'id', placeholder: 'ws-id-here', required: true }],
+    body: null
+  },
+  createUser: {
+    method: 'POST', path: '/api/users',
+    desc: 'Register a new user.',
+    headers: [{ name: 'Content-Type', placeholder: 'application/json', fixed: 'application/json' }],
+    pathParams: [],
+    body: `{\n  "name": "Frodo Baggins",\n  "email": "frodo@theshire.me",\n  "workspaces": []\n}`
+  },
+  getUsers: {
+    method: 'GET', path: '/api/users',
+    desc: 'List all registered users.',
+    headers: [],
+    pathParams: [],
+    body: null
+  },
+};
+
+let current = null;
+
+function selectEndpoint(key) {
+  current = key;
+  const ep = ENDPOINTS[key];
+
+  // Header
+  document.getElementById('active-method').textContent = ep.method;
+  document.getElementById('active-method').className = `method-badge m-${ep.method}`;
+  document.getElementById('active-path').textContent = ep.path;
+  document.getElementById('active-desc').textContent = ep.desc;
+
+  // Highlight sidebar
+  document.querySelectorAll('.ep-btn').forEach(b => b.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+
+  // Headers
+  const hf = document.getElementById('headers-fields');
+  hf.innerHTML = '';
+  ep.headers.forEach(h => {
+    const d = document.createElement('div');
+    d.className = 'field';
+    d.innerHTML = `<label>${h.name}${h.required ? '<span class="req">*</span>' : ''}</label>
+      <input id="h_${h.name.replace(/-/g,'_')}" placeholder="${h.placeholder}" value="${h.fixed || ''}" ${h.fixed ? 'readonly style="opacity:.5"' : ''} />`;
+    hf.appendChild(d);
+  });
+
+  // Path params
+  const pf = document.getElementById('path-fields');
+  pf.innerHTML = '';
+  if (ep.pathParams.length === 0) {
+    pf.innerHTML = '<span style="font-size:.72rem;color:var(--muted)">None</span>';
+  }
+  ep.pathParams.forEach(p => {
+    const d = document.createElement('div');
+    d.className = 'field';
+    d.innerHTML = `<label>${p.name}${p.required ? '<span class="req">*</span>' : ''}</label>
+      <input id="p_${p.name}" placeholder="${p.placeholder}" />`;
+    pf.appendChild(d);
+  });
+
+  // Body
+  const bs = document.getElementById('body-section');
+  if (ep.body) {
+    bs.style.display = '';
+    document.getElementById('body-input').value = ep.body;
+  } else {
+    bs.style.display = 'none';
+  }
+
+  // Reset response
+  document.getElementById('status-badge').textContent = 'Waiting…';
+  document.getElementById('status-badge').className = '';
+  document.getElementById('latency').textContent = '';
+  document.getElementById('response-body').innerHTML = '<div id="empty-state"><span class="icon">📡</span><p>Press Send Request</p></div>';
+}
+
+async function sendRequest() {
+  if (!current) return;
+  const ep = ENDPOINTS[current];
+  const base = document.getElementById('base-url').value.replace(/\/$/, '');
+
+  // Build URL
+  let url = base + ep.path;
+  ep.pathParams.forEach(p => {
+    const val = document.getElementById('p_' + p.name)?.value || '';
+    url = url.replace(`{${p.name}}`, encodeURIComponent(val));
+  });
+
+  // Build headers
+  const headers = {};
+  ep.headers.forEach(h => {
+    const id = 'h_' + h.name.replace(/-/g, '_');
+    const val = document.getElementById(id)?.value || h.fixed || '';
+    if (val) headers[h.name] = val;
+  });
+
+  // Body
+  let body = undefined;
+  if (ep.body) {
+    body = document.getElementById('body-input').value;
+  }
+
+  // Show spinner
+  const spinner = document.getElementById('spinner');
+  const statusBadge = document.getElementById('status-badge');
+  const respBody = document.getElementById('response-body');
+  spinner.style.display = 'block';
+  statusBadge.textContent = 'Sending…';
+  statusBadge.className = '';
+  respBody.textContent = '';
+
+  const t0 = Date.now();
+  try {
+    const res = await fetch(url, { method: ep.method, headers, body });
+    const ms = Date.now() - t0;
+    const text = await res.text();
+
+    statusBadge.textContent = `${res.status} ${res.statusText}`;
+    statusBadge.className = res.ok ? 'ok' : 'err';
+    document.getElementById('latency').textContent = `${ms} ms`;
+
+    let pretty;
+    try {
+      pretty = syntaxHighlight(JSON.parse(text));
+    } catch {
+      pretty = escapeHtml(text);
+    }
+    respBody.innerHTML = pretty;
+  } catch (err) {
+    const ms = Date.now() - t0;
+    statusBadge.textContent = 'Network Error';
+    statusBadge.className = 'err';
+    document.getElementById('latency').textContent = `${ms} ms`;
+    respBody.innerHTML = `<span style="color:var(--error)">${escapeHtml(err.message)}\n\nMake sure your Spring Boot app is running at:\n${document.getElementById('base-url').value}</span>`;
+  } finally {
+    spinner.style.display = 'none';
+  }
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function syntaxHighlight(json) {
+  const str = JSON.stringify(json, null, 2);
+  return str.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, match => {
+    if (/^"/.test(match)) {
+      if (/:$/.test(match)) return `<span class="json-key">${escapeHtml(match)}</span>`;
+      return `<span class="json-str">${escapeHtml(match)}</span>`;
+    }
+    if (/true|false/.test(match)) return `<span class="json-bool">${match}</span>`;
+    if (/null/.test(match)) return `<span class="json-null">${match}</span>`;
+    return `<span class="json-num">${match}</span>`;
+  });
+}
+</script>
+</body>
+</html>
