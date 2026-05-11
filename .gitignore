@@ -47,3 +47,14 @@ infrastructure/loki/durable/
 
 ### Claude Code ###
 .claude/
+
+### Local build artifacts ###
+jenkins_config/
+workspaces/
+*.log
+*_local.jmx
+Graph Results.jmx
+View Results Tree.jmx
+*.jtl
+jmeter/report/
+.DS_Store
