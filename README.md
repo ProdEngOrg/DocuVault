@@ -97,6 +97,8 @@ All mutating document endpoints require the `X-User-Id` header for ownership and
 
 | Method | Path | Headers | Description | Request Body |
 |-|-|-|-|-|
+| `GET` | `/` | — | Get all workspaces | — |
+| `GET` | `/{id}` | — | Get workspace by id | — |
 | `GET` | `/statistics/{id}` | — | Get workspace statistics | — |
 | `POST` | `/` | — | Create workspace | `{ "name", "userId" }` |
 | `POST` | `/add-user` | — | Add user to workspace | `{ "userId", "workspaceId" }` |
