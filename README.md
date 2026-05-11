@@ -314,7 +314,7 @@ The application follows a classic **Controller → Service → Repository** laye
 MongoDB stores three primary collections:
 - `workspaces` — workspace entities with member lists.
 - `documents` — each document version is stored as a separate document, grouped by a shared `groupId` field. Querying by `groupId` and sorting by `version` descending returns the latest version.
-- Administrative access is available via **Mongo Express** at `http://localhost:8090` (credentials: `unibuc` / `adobe`).
+- Administrative access is available via **Mongo Express** at `http://localhost:8090`; authentication credentials are configured via the Docker/environment settings and should be overridden as needed instead of being documented here.
 
 #### 4. Observability Stack
 The entire stack is scraped and visualised through:
