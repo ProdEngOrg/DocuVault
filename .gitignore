@@ -57,3 +57,4 @@ Graph Results.jmx
 View Results Tree.jmx
 *.jtl
 jmeter/report/
+.DS_Store
