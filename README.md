@@ -15,7 +15,7 @@
 7. [CI/CD Pipeline](#cicd-pipeline)
 8. [Observability](#observability)
 9. [Contributing](#contributing)
-10. [Prerequisites & Running the Project](#prerequisites)
+10. [Prerequisites & Running the Project](#prerequisites--running-the-project)
 
 ---
 
