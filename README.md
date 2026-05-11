@@ -418,7 +418,7 @@ This is the primary performance test plan — a full CRUD load test against the 
 | Listener | Purpose |
 |---|---|
 | **View Results Tree** | Per-request detail inspection — request/response headers, body, timing |
-| **Summary Report** | Aggregate statistics table: avg/min/max/P90 latency, throughput, error % |
+| **Summary Report** | Aggregate statistics table: avg/min/max, throughput, error % |
 | **Graph Results** | Real-time visualization of throughput and response time trends |
 
 #### Test Results (Documents Endpoint — 50 threads, 5 loops)
