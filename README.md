@@ -44,7 +44,7 @@ The project architecture is modular, separating the isolation responsibilities, 
 |---|---|
 | **Isolated Virtual Workspaces** | Per user virtual workspaces, guaranteeing the isolation of data and granular access permissions |
 | **Document CRUD & Export** | Full operations on virtual files stored in MongoDB, with support for client download |
-| **Restful API** |  |
+| **Restful API** | Resource-oriented endpoints for secure document management inside isolated user workspaces |
 | **Automated Versioning** | Automatic creation of new versions (v1 → v2 → v3) for each update, without overwriting the history |
 
 
