@@ -25,27 +25,29 @@
 
 | Member | Role |
 |---|---|
-| Enache-Preoteasa David | Identity & Workspace Manager — delegare spații virtuale, sistem de distribuire a documentelor cu permisiuni de acces |
-| Bunescu Robert | Document Operations Core & API Design & Versioning — operații CRUD pentru documente |
+| Enache-Preoteasa David | Identity & Workspace Manager — delegation of virtual workspaces, document sharing system with access permissions |
+| Bunescu Robert | Document Operations Core & API Design & Versioning — CRUD operations for documents, version history system |
 
 ---
 
 ## Project Description
 
-DocuVault este o aplicație de tip **Software-as-a-Service (SaaS)** care expune un API RESTful pentru gestionarea sigură și eficientă a documentelor în cloud. Sistemul oferă utilizatorilor spații de lucru virtuale izolate, unde aceștia pot crea, citi, actualiza și șterge documente, având control deplin asupra datelor proprii.
+DocuVault is a **Software-as-a-Service (SaaS)** application that exposes a RESTful API for the secure and efficient management of cloud documents. The system gives users isolated virtual workspaces, where they can create, read, update and delete documents, and have full control over their personal data.
 
-O componentă centrală a logicii de business o reprezintă **sistemul automat de versionare**. Spre deosebire de un sistem de stocare simplu, atunci când un utilizator actualizează conținutul sau metadatele unui document, DocuVault nu suprascrie informația veche, ci generează automat o nouă versiune a fișierului, păstrând istoricul complet al modificărilor pentru trasabilitate și recuperare.
+A central component of the business logic is the **automatic versioning system**. Unlike a simple storage system, when a user updates the content or metadata of a document, DocuVault does not overwrite the old information, but instead automatically generates a new version of the file, keeping the complete change history for traceability and recovery.
 
-Arhitectura proiectului este modulară, separând responsabilitățile de izolare, operațiunile de bază pe fișiere (CRUD) și motorul de versionare. Acest grad de decuplare, susținut de o bază de date NoSQL persistentă (MongoDB), permite testarea riguroasă a regulilor de acces și a fluxurilor de date.
+The project architecture is modular, separating the isolation responsibilities, core operations on files (CRUD), and the versioning engine. This degree of decoupling, supported by a NoSQL persistent database (MongoDB), allows rigorous testing of the access rules and data flows.
 
 ### Key Features
 
 | Feature | Description |
 |---|---|
-| **Isolated Virtual Workspaces** | Spații virtuale unice per utilizator, garantând izolarea datelor și permisiuni granulare de acces |
-| **Document CRUD & Export** | Operațiuni complete pe fișiere virtuale stocate în MongoDB, cu suport pentru descărcare pe client |
+| **Isolated Virtual Workspaces** | Per user virtual workspaces, guaranteeing the isolation of data and granular access permissions |
+| **Document CRUD & Export** | Full operations on virtual files stored in MongoDB, with support for client download |
 | **Restful API** |  |
-| **Automated Versioning** | Creare automată de versiuni noi (v1 → v2 → v3) la fiecare update, fără suprascrierea istoricului |
+| **Automated Versioning** | Automatic creation of new versions (v1 → v2 → v3) for each update, without overwriting the history |
+
+
 
 ### Technical Stack
 
@@ -331,7 +333,7 @@ The project uses a **multi-branch Git workflow** where each long-lived branch ha
 
 | Branch | Purpose | Key Contents |
 |---|---|---|
-| `main` | **Production-ready application code.** The single source of truth for the Spring Boot service. All feature branches are cut from here and merged back via Pull Request after peer review. Protected — direct pushes are not allowed. | `src/`, `build.gradle`, `Dockerfile`, `docker-compose.yml` |
+| `main` | **Production-ready application code.** The single source of truth for the Spring Boot service. All feature branches are cut from here and merged back via Pull Request after peer review. | `src/`, `build.gradle`, `Dockerfile`, `docker-compose.yml` |
 | `monitoring` | **Infrastructure-as-Code for the observability stack.** Contains all configuration files for the monitoring layer. Changes here do not affect application logic, only how the system is observed. | `infrastructure/prometheus/`, `infrastructure/grafana/`, `infrastructure/alertmanager/`, `infrastructure/loki/` |
 | `jenkins` | **CI/CD pipeline definitions.** Houses the `Jenkinsfile` and any Jenkins-specific configuration. Separating this from `main` means pipeline changes can be tested and reviewed independently without risking the production codebase. | `infrastructure/Jenkinsfile`, `jenkins_config/` |
 
