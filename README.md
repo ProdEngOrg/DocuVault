@@ -702,16 +702,15 @@ route:
 
 #### Configured Alert Rules
 
-All rule files are loaded by Prometheus from `infrastructure/prometheus/`:
+The following table reflects the alert rules currently configured and loaded by Prometheus from `infrastructure/prometheus/`:
 
 | File | Group | Alert Name | Condition | Severity |
 |---|---|---|---|---|
 | `app-alerts.yml` | `AppAlerts` | `WARNING-HighThroughput` | `rate(prod_eng_info_count_total[1m]) > 10` for 10s | ⚠️ warning |
 | `app-alerts.yml` | `AppAlerts` | `CRITICAL-HighThroughput` | `rate(prod_eng_info_count_total[1m]) > 50` for 10s | 🔴 critical |
-| `canary-alerts.yml` | `CanaryAlerts` | `WARNING-NoThroughput` | `rate(prod_eng_info_count_total[1m]) == 0` for 10s | ⚠️ warning |
+| `canary-alerts.yml` | `CanaryAlerts` | `WARNING-NoThroughout` | `rate(prod_eng_info_count_total[1m]) == 0` for 10s | ⚠️ warning |
 | `container-alerts.yml` | `ContainerAlerts` | `WARNING-ApplicationContainerDown` | Container not seen for > 20s | ⚠️ warning |
 | `container-alerts.yml` | `ContainerAlerts` | `CRITICAL-ApplicationContainerDown` | Container not seen for > 60s | 🔴 critical |
-| `injector-alerts.yml` | `ContainerAlerts` | `WARNING-TrafficInjectorContainersDown` | Traffic injector container gone for > 20s | ⚠️ warning |
 
 #### Alert Lifecycle
 
