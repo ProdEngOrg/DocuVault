@@ -448,7 +448,67 @@ Run environment: `localhost`, Docker Compose (`mongo` + `prod-eng-service` profi
 
 > **Key takeaways:** All 1,000 requests completed successfully with **zero errors**. Average latency stayed consistently under **20ms** across all four CRUD operations even under concurrent load (50 virtual users). The auto-versioning logic on `PUT` adds no measurable overhead compared to `POST`.
 
-#### 2. Todos Test Plans (reference/legacy)
+#### 2. Workspaces Test Plan (`jmeter/Workspaces Test Plan.jmx`)
+
+This performance test plan performs load tests against the `/api/workspaces` API.
+
+| Parameter | Value |
+|---|---|
+| **Threads (virtual users)** | 10 |
+| **Ramp-up period** | 10 seconds |
+| **Loop count** | 5 per thread |
+| **Total requests** | 10 × 5 × 4 samplers = **200 requests** |
+| **Think time** | 0-2000ms constant timers between requests (depending on the sampler) |
+| **On error** | Continue |
+
+**HTTP Samplers (executed in sequence per loop):**
+
+| # | Sampler | Method | Endpoint | Description |
+|---|---|---|---|---|
+| 1 | `Get Workspace` | `GET` | `/api/workspaces/${workspaceId}` | Reads a workspace using the list of workspace IDs provided in a CSV file |
+| 2 | `Create User` | `POST` | `/api/users` | Creates a user that will be used by the next sampler for creating a workspace |
+| 3 | `Create Workspace` | `POST` | `/api/workspaces` | Creates a workspace |
+| 4 | `Get All Workspaces` | `GET` | `/api/workspaces` | Gets all workspaces |
+
+> A **JSON Post-Processor** (`Extract userId`) on the POST sampler chains the `userId` variable across subsequent samplers, creating a realistic correlated CRUD flow.
+
+**Listeners (result collectors):**
+
+| Listener | Purpose |
+|---|---|
+| **View Results Tree** | Per-request detail inspection — request/response headers, body, timing |
+| **Summary Report** | Aggregate statistics table: avg/min/max, throughput, error % |
+| **Aggregate Report** | Median/P90 latency |
+| **Graph Results** | Real-time visualization of throughput and response time trends |
+
+#### Test Results (Workspaces Endpoint — 10 threads, 5 loops)
+
+Run environment: `localhost`, Docker Compose (`mongo` + `prod-eng-service` profiles), Windows (Intel Core i3-1215U), JMeter 5.6.3 GUI mode.
+
+**Aggregate Summary:**
+
+| Metric | Value |
+|---|---|
+| **Total Requests** | 200 |
+| **Duration** | 19 seconds |
+| **Throughput** | **10.0 req/s** |
+| **Avg Response Time** | **86 ms** |
+| **Min Response Time** | 55 ms |
+| **Max Response Time** | 247 ms |
+| **Error Rate** | **0.00%** |
+
+**Per-Sampler Breakdown:**
+
+| Sampler | Requests | Avg (ms) | Min (ms) | Max (ms) | Error % |
+|---|---|---|---|---|---|
+| `Get Workspace` | 50 | 82 | 55 | 247 | 0.0% |
+| `Create User` | 50 | 90 | 59 | 203 | 0.0% |
+| `Create Workspace` | 50 | 84 | 57 | 173 | 0.0% |
+| `Get All Workspaces` | 50 | 88 | 58 | 198 | 0.0% |
+
+> **Key takeaways:** All 200 requests completed successfully with **zero errors**. Average latency stayed consistently under **90ms** across all four operations even under concurrent load (10 virtual users).
+
+#### 3. Todos Test Plans (reference/legacy)
 
 These plans target the `/api/todos` endpoint from the original service template and serve as reference for running JMeter against GitHub Codespaces:
 
@@ -457,7 +517,7 @@ These plans target the `/api/todos` endpoint from the original service template 
 | `jmeter/todo_test_plan_local.jmx` | `localhost:8080` | 10 | 5 | Local execution, `Content-Type: application/json` header |
 | `jmeter/todo_test_plan_codespace.jmx` | `[codespace]-8080.app.github.dev` | 10 | 5 | Codespace execution, requires `X-Github-Token` header |
 
-#### 3. Standalone Listener Fragments
+#### 4. Standalone Listener Fragments
 
 Reusable JMeter listener fragments that can be imported into any test plan:
 
